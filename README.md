@@ -8,6 +8,16 @@ mvn install::install-file -Dfile=test-management-1.2.jar
                           -Dversion=1.2 
                           -Dpackaging=jar
 ```
+
+After that you need to add next dependency to your pom-file: 
+```bash
+<dependency>
+    <groupId>com.epam.jira</groupId>
+    <artifactId>test-management</artifactId>
+    <version>1.3</version>
+</dependency>
+```
+
 ## ExecutionListener
 Add `ExecutionListener` to your JUnit or TestNG listeners. 
 
