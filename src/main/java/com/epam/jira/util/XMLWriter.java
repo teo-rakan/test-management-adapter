@@ -15,74 +15,93 @@ import java.io.IOException;
 import java.util.List;
 
 public class XMLWriter {
-    public static void writeXmlFile(List<JiraTestCase> tests, String filePath)  {
 
+    public static void writeXmlFile(List<JiraTestCase> tests, String filePath)  {
         try {
-            DocumentBuilderFactory dFact = DocumentBuilderFactory.newInstance();
-            DocumentBuilder build = dFact.newDocumentBuilder();
-            Document doc = build.newDocument();
+            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = docFactory.newDocumentBuilder();
+            Document doc = builder.newDocument();
 
             // Create root node
             Element root = doc.createElement("tests");
             doc.appendChild(root);
 
             // Create child node for each test
-            for (JiraTestCase test : tests) {
-                Element testNode = doc.createElement("test");
-                root.appendChild(testNode);
-
-                Element key = doc.createElement("key");
-                key.appendChild(doc.createTextNode(test.getJiraTestKey()));
-                testNode.appendChild(key);
-
-                Element status = doc.createElement("status");
-                status.appendChild(doc.createTextNode(test.getStatus().toString()));
-                testNode.appendChild(status);
-
-                List<String> filePaths = test.getFilePaths();
-                if (!filePaths.isEmpty()) {
-                    Element attachments = doc.createElement("attachments");
-                    testNode.appendChild(attachments);
-                    for (String path : filePaths) {
-                        Element attachment = doc.createElement("attachment");
-                        attachment.appendChild(doc.createTextNode(path));
-                        attachments.appendChild(attachment);
-                    }
-                }
-
-                List<String> commentList = test.getComments();
-                if (!commentList.isEmpty()) {
-                    Element comments = doc.createElement("comments");
-                    testNode.appendChild(comments);
-                    for (String comment : commentList) {
-                        Element commentNode = doc.createElement("comment");
-                        commentNode.appendChild(doc.createTextNode(comment));
-                        comments.appendChild(commentNode);
-                    }
-                }
-            }
+            tests.forEach(test -> root.appendChild(createTestElement(doc, test)));
 
             // Save the document to the disk file
-            TransformerFactory tranFactory = TransformerFactory.newInstance();
-            Transformer aTransformer = tranFactory.newTransformer();
-
-            // format the XML nicely
-            aTransformer.setOutputProperty(OutputKeys.ENCODING, "ISO-8859-1");
-            aTransformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-            aTransformer.setOutputProperty(OutputKeys.INDENT, "yes");
-
-            DOMSource source = new DOMSource(doc);
-            try {
-                FileWriter fos = new FileWriter(filePath);
-                StreamResult result = new StreamResult(fos);
-                aTransformer.transform(source, result);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            writeToXmlFile(doc, filePath);
         } catch (TransformerException ex) {
             System.out.println("Error outputting document");
         } catch (ParserConfigurationException ex) {
             System.out.println("Error building document");
         }
+    }
+
+    private static void writeToXmlFile(Document doc, String filePath) throws TransformerException {
+        TransformerFactory tranFactory = TransformerFactory.newInstance();
+        Transformer aTransformer = tranFactory.newTransformer();
+
+        // format the XML nicely
+        aTransformer.setOutputProperty(OutputKeys.ENCODING, "ISO-8859-1");
+        aTransformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+        aTransformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+        DOMSource source = new DOMSource(doc);
+        try {
+            FileWriter fos = new FileWriter(filePath);
+            StreamResult result = new StreamResult(fos);
+            aTransformer.transform(source, result);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static Element createTestElement(Document doc, JiraTestCase test) {
+        Element testNode = doc.createElement("test");
+
+        // Create Jira Test key node
+        Element key = doc.createElement("key");
+        key.appendChild(doc.createTextNode(test.getJiraTestKey()));
+        testNode.appendChild(key);
+
+        // Create test status node
+        Element status = doc.createElement("status");
+        status.appendChild(doc.createTextNode(test.getStatus().toString()));
+        testNode.appendChild(status);
+
+        // Add attachments if necessary
+        List<String> filePaths = test.getFilePaths();
+        if (!filePaths.isEmpty())
+            testNode.appendChild(createAttachmentsElement(doc, filePaths));
+
+        // Add comments if necessary
+        List<String> comments = test.getComments();
+        if (!comments.isEmpty())
+            testNode.appendChild(createCommentsElement(doc, comments));
+
+        return testNode;
+    }
+
+    private static Element createAttachmentsElement(Document doc, List<String> filePaths) {
+        Element attachments = doc.createElement("attachments");
+
+        for (String path : filePaths) {
+            Element attachment = doc.createElement("attachment");
+            attachment.appendChild(doc.createTextNode(path));
+            attachments.appendChild(attachment);
+        }
+        return attachments;
+    }
+
+    private static Element createCommentsElement(Document doc, List<String> commentList) {
+        Element comments = doc.createElement("comments");
+
+        for (String comment : commentList) {
+            Element commentNode = doc.createElement("comment");
+            commentNode.appendChild(doc.createTextNode(comment));
+            comments.appendChild(commentNode);
+        }
+        return comments;
     }
 }
