@@ -2,10 +2,10 @@
 
 You could install this artifact on a specific local repository by using maven install-file goal.
 ```bash
-mvn install::install-file -Dfile=test-management-1.2.jar 
+mvn install::install-file -Dfile=test-management-1.4.jar 
                           -DgroupId=com.epam.jira 
                           -DartifactId=test-management 
-                          -Dversion=1.2 
+                          -Dversion=1.4 
                           -Dpackaging=jar
 ```
 
@@ -14,7 +14,7 @@ After that you need to add next dependency to your pom-file:
 <dependency>
     <groupId>com.epam.jira</groupId>
     <artifactId>test-management</artifactId>
-    <version>1.3</version>
+    <version>1.4</version>
 </dependency>
 ```
 
@@ -47,7 +47,7 @@ Add `ExecutionListener` to your JUnit or TestNG listeners.
   </build>
 ```
 
-Also there are several other ways of doing this for **TestNG**:
+Also there are several other ways of doing this:
 * Using **@Listeners** annotation at class level
 ```bash
   @Listeners({com.epam.jira.testng.ExecutionListener.class})
@@ -76,16 +76,6 @@ Also there are several other ways of doing this for **TestNG**:
     testNG.setTestClasses(new Class[] { TestClass.class });
     testNG.addListener(new ExecutionListener());
     testNG.run();
-  }
-```
-
-As for **JUnit**:
-* Adding listeners through **JUnitCore** API
-```bash
-  public static void main(String[] args) {
-    JUnitCore runner = new JUnitCore();
-    runner.addListener(new ExecutionListener());
-    runner.run(TestFeatureOne.class, TestFeatureTwo.class);
   }
 ```
 
