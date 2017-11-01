@@ -79,6 +79,15 @@ Also there are several other ways of doing this:
   }
 ```
 
+## Screenshots
+You should initialize Screenshoter class with WebDriver instance in order to attach screenshots to JIRA issue in the fail cases.
+```bash
+    @BeforeClass
+    public void initialize() {
+        Screenshoter.initialize(driver);
+    }
+```
+
 ## @JIRATestKey
 Mark tests with `@JIRATestKey` tag.
 
