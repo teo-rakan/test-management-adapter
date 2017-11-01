@@ -25,8 +25,8 @@ public class Screenshoter {
 
         File screenshot = ((TakesScreenshot) driverInstance).getScreenshotAs(OutputType.FILE);
         try {
-            String screenshotName = screensFolder + "/scr_" + System.nanoTime() + ".png";
-            File copy = new File(screenshotName);
+            String screenshotName =  "scr_" + System.nanoTime() + ".png";
+            File copy = new File(screensFolder + (screensFolder.endsWith("/") ? "" : "/") + screenshotName);
             FileUtils.copyFile(screenshot, copy);
             return screenshotName;
         } catch (IOException e) {
