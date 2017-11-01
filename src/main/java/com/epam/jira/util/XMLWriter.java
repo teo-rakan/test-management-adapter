@@ -1,5 +1,6 @@
 package com.epam.jira.util;
 
+import com.epam.jira.core.JiraTestCase;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -11,10 +12,10 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Map;
+import java.util.List;
 
 public class XMLWriter {
-    public static void writeXmlFile(Map<String, String> tests)  {
+    public static void writeXmlFile(List<JiraTestCase> tests, String filePath)  {
 
         try {
             DocumentBuilderFactory dFact = DocumentBuilderFactory.newInstance();
@@ -26,17 +27,39 @@ public class XMLWriter {
             doc.appendChild(root);
 
             // Create child node for each test
-            for (Map.Entry<String, String> test : tests.entrySet()) {
+            for (JiraTestCase test : tests) {
                 Element testNode = doc.createElement("test");
                 root.appendChild(testNode);
 
                 Element key = doc.createElement("key");
-                key.appendChild(doc.createTextNode(test.getKey()));
+                key.appendChild(doc.createTextNode(test.getJiraTestKey()));
                 testNode.appendChild(key);
 
                 Element status = doc.createElement("status");
-                status.appendChild(doc.createTextNode(test.getValue()));
+                status.appendChild(doc.createTextNode(test.getStatus().toString()));
                 testNode.appendChild(status);
+
+                List<String> filePaths = test.getFilePaths();
+                if (!filePaths.isEmpty()) {
+                    Element attachments = doc.createElement("attachments");
+                    testNode.appendChild(attachments);
+                    for (String path : filePaths) {
+                        Element attachment = doc.createElement("attachment");
+                        attachment.appendChild(doc.createTextNode(path));
+                        attachments.appendChild(attachment);
+                    }
+                }
+
+                List<String> commentList = test.getComments();
+                if (!commentList.isEmpty()) {
+                    Element comments = doc.createElement("comments");
+                    testNode.appendChild(comments);
+                    for (String comment : commentList) {
+                        Element commentNode = doc.createElement("comment");
+                        commentNode.appendChild(doc.createTextNode(comment));
+                        comments.appendChild(commentNode);
+                    }
+                }
             }
 
             // Save the document to the disk file
@@ -50,7 +73,7 @@ public class XMLWriter {
 
             DOMSource source = new DOMSource(doc);
             try {
-                FileWriter fos = new FileWriter("./target/tm.xml");
+                FileWriter fos = new FileWriter(filePath);
                 StreamResult result = new StreamResult(fos);
                 aTransformer.transform(source, result);
             } catch (IOException e) {

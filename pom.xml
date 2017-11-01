@@ -4,14 +4,14 @@
 
     <groupId>com.epam.jira</groupId>
     <artifactId>test-management</artifactId>
-    <version>1.2</version>
+    <version>1.4</version>
     <packaging>jar</packaging>
 
     <name>QASpace Test Management Annotation</name>
     <url>http://maven.apache.org</url>
 
     <properties>
-        <jdk.version>1.8</jdk.version>
+        <jdk.version>1.7</jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -20,11 +20,6 @@
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>6.11</version>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
         </dependency>
     </dependencies>
 
@@ -51,6 +46,20 @@
                     </archive>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.20.1</version>
+                <configuration>
+                    <properties>
+                        <property>
+                            <name>listener</name>
+                            <value>com.epam.jira.testng.ExecutionListener</value>
+                        </property>
+                    </properties>
+                </configuration>
+            </plugin>
         </plugins>
+
     </build>
 </project>
