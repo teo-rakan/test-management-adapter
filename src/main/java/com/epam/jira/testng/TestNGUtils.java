@@ -10,8 +10,7 @@ import java.lang.reflect.Method;
 class TestNGUtils {
 
     static String getMethodName (ITestResult result) {
-        Method method = result.getMethod().getConstructorOrMethod().getMethod();
-        return method.getName();
+        return result.getMethod().getConstructorOrMethod().getMethod().getName();
     }
 
     static String [] getMethodGroups (ITestResult result) {

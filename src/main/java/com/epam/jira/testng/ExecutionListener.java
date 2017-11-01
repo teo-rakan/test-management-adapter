@@ -1,6 +1,7 @@
 package com.epam.jira.testng;
 
 import com.epam.jira.core.JiraTestCase;
+import com.epam.jira.core.Screenshoter;
 import com.epam.jira.core.TestResult;
 import com.epam.jira.util.FileUtils;
 import org.testng.ITestContext;
@@ -34,21 +35,39 @@ public class ExecutionListener extends TestListenerAdapter {
 
         String key = TestNGUtils.getTestJIRATestKey(iTestResult);
         JiraTestCase testCase = null;
+
         if (key != null) {
+            String screenshot = null;
+            String comment;
+            if (Screenshoter.isInitialized()) {
+                screenshot = Screenshoter.takeScreenshot("./target/attachments/");
+            }
+
             testCase = new JiraTestCase(key, TestResult.FAILED);
 
+            // Save failure message and/or trace
             Throwable throwable = iTestResult.getThrowable();
             if (throwable instanceof AssertionError) {
-                testCase.addComment("Failed due to: " + throwable.getMessage());
+                comment = "Assertion failed: " + throwable.getMessage();
             } else {
-                String filePath = "./target/stacktrace-" + key  + ".txt";
+                String filePath = "./target/attachments/stacktrace-" + key  + ".txt";
                 FileUtils.writeStackTrace(throwable, filePath);
                 testCase.addFilePath(filePath);
-                testCase.addComment("Failed due to: " + throwable.getMessage() + " . Full stack trace attached as 'stacktrace-" + key  + ".txt'" );
+                comment = "Failed due to: " + throwable.getClass().getName() + ": " + throwable.getMessage()
+                        + " . Full stack trace attached as 'stacktrace-" + key  + ".txt'";
             }
+
+            // Save screenshot if possible
+            if (screenshot != null) {
+                testCase.addFilePath(screenshot);
+                comment += " . Screenshot attached: " + screenshot;
+            }
+            testCase.addComment(comment);
             tests.add(testCase);
         }
         saveMethodAndGroupsInFailed(iTestResult, testCase);
+
+
     }
 
     private void saveMethodAndGroupsInFailed(ITestResult iTestResult, JiraTestCase testCase) {
