@@ -40,7 +40,7 @@ public class ExecutionListener extends TestListenerAdapter {
             String screenshot = null;
             String comment;
             if (Screenshoter.isInitialized()) {
-                screenshot = Screenshoter.takeScreenshot("./target");
+                screenshot = Screenshoter.takeScreenshot("/target");
             }
 
             testCase = new JiraTestCase(key, TestResult.FAILED);
@@ -50,7 +50,7 @@ public class ExecutionListener extends TestListenerAdapter {
             if (throwable instanceof AssertionError) {
                 comment = "Assertion failed: " + throwable.getMessage();
             } else {
-                String filePath = "./target/stacktrace-" + key  + ".txt";
+                String filePath = "/target/stacktrace-" + key  + ".txt";
                 FileUtils.writeStackTrace(throwable, filePath);
                 testCase.addFilePath(filePath);
                 comment = "Failed due to: " + throwable.getClass().getName() + ": " + throwable.getMessage()
