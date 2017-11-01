@@ -20,6 +20,7 @@ import java.util.List;
 public class ExecutionListener extends TestListenerAdapter {
 
     private List<JiraTestCase> tests = new ArrayList<>();
+    //private List<JiraTestCase>
 
     @Override
     public void onTestSuccess(ITestResult iTestResult) {
