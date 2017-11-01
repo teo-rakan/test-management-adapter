@@ -56,6 +56,10 @@ public class JiraTestCase {
 
     @Override
     public String toString() {
-        return "{" + jiraTestKey + " status: " + status +  "}";
+        return "{JIRATestKey = '" + jiraTestKey + "', status = '" + status +  "'}";
+    }
+
+    public void addComment(String comment) {
+        comments.add(comment);
     }
 }

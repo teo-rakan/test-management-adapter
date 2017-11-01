@@ -7,16 +7,32 @@ import org.w3c.dom.Element;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.*;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 
-public class XMLWriter {
+public class FileUtils {
 
-    public static void writeXmlFile(List<JiraTestCase> tests, String filePath)  {
+    public static void writeStackTrace(Throwable throwable, String filePath) {
+        try {
+            PrintWriter writer = new PrintWriter(filePath, "UTF-8");
+            writer.println(throwable.getMessage());
+
+            for (StackTraceElement element : throwable.getStackTrace())
+                writer.println(element.toString());
+
+            writer.close();
+        } catch (FileNotFoundException | UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void writeXmlFile(List<JiraTestCase> tests, String filePath) {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = docFactory.newDocumentBuilder();

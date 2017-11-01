@@ -1,31 +1,28 @@
 package com.epam.jira.testng;
 
-import com.epam.jira.JIRATestKey;
 import com.epam.jira.core.JiraTestCase;
 import com.epam.jira.core.TestResult;
-import com.epam.jira.util.XMLWriter;
+import com.epam.jira.util.FileUtils;
 import org.testng.ITestContext;
 import org.testng.ITestNGMethod;
 import org.testng.ITestResult;
 import org.testng.TestListenerAdapter;
-import org.testng.annotations.Test;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
+import static com.epam.jira.testng.TestNGUtils.getTestGroupsDependencies;
+import static com.epam.jira.testng.TestNGUtils.getTestMethodDependencies;
 
 public class ExecutionListener extends TestListenerAdapter {
 
     private List<JiraTestCase> tests = new ArrayList<>();
-    //private List<JiraTestCase>
+    private Map<String, JiraTestCase> failedMethods = new HashMap<>();
+    private Map<String, List<JiraTestCase>> failedGroups = new HashMap<>();
 
     @Override
     public void onTestSuccess(ITestResult iTestResult) {
         super.onTestSuccess(iTestResult);
-        String key = getTestJIRATestKey(iTestResult);
+        String key = TestNGUtils.getTestJIRATestKey(iTestResult);
         if (key != null) {
             tests.add(new JiraTestCase(key, TestResult.PASSED));
         }
@@ -34,29 +31,37 @@ public class ExecutionListener extends TestListenerAdapter {
     @Override
     public void onTestFailure(ITestResult iTestResult) {
         super.onTestFailure(iTestResult);
-        String key = getTestJIRATestKey(iTestResult);
+
+        String key = TestNGUtils.getTestJIRATestKey(iTestResult);
+        JiraTestCase testCase = null;
         if (key != null) {
+            testCase = new JiraTestCase(key, TestResult.FAILED);
+
             Throwable throwable = iTestResult.getThrowable();
             if (throwable instanceof AssertionError) {
-                tests.add(new JiraTestCase(key, String.join(System.lineSeparator(), throwable.getMessage())));
+                testCase.addComment("Failed due to: " + throwable.getMessage());
             } else {
-                //todo create file with stacktrace
-                String stackTraceFile = "./target/stacktrace-" + key  + ".txt";
-                PrintWriter writer = null;
-                try {
-                    writer = new PrintWriter(stackTraceFile, "UTF-8");
-                } catch (FileNotFoundException | UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
+                String filePath = "./target/stacktrace-" + key  + ".txt";
+                FileUtils.writeStackTrace(throwable, filePath);
+                testCase.addFilePath(filePath);
+                testCase.addComment("Failed due to: " + throwable.getMessage() + " . Full stack trace attached as 'stacktrace-" + key  + ".txt'" );
+            }
+            tests.add(testCase);
+        }
+        saveMethodAndGroupsInFailed(iTestResult, testCase);
+    }
 
-                for (StackTraceElement element : throwable.getStackTrace()){
-                    writer.println(element.toString());
-                }
-                writer.close();
+    private void saveMethodAndGroupsInFailed(ITestResult iTestResult, JiraTestCase testCase) {
+        String [] groups = TestNGUtils.getMethodGroups(iTestResult);
+        String methodName = TestNGUtils.getMethodName(iTestResult);
 
-                JiraTestCase testCase = new JiraTestCase(key, TestResult.FAILED);
-                testCase.addFilePath(stackTraceFile);
-                tests.add(testCase);
+        failedMethods.put(methodName, testCase);
+        for (String group : groups) {
+            List<JiraTestCase> testCases = failedGroups.get(group);
+            if (testCases != null) {
+                testCases.add(testCase);
+            } else {
+                failedGroups.put(group, Arrays.asList(testCase));
             }
         }
     }
@@ -64,10 +69,44 @@ public class ExecutionListener extends TestListenerAdapter {
     @Override
     public void onTestSkipped(ITestResult iTestResult) {
         super.onTestSkipped(iTestResult);
-        String key = getTestJIRATestKey(iTestResult);
+        String key = TestNGUtils.getTestJIRATestKey(iTestResult);
         if (key != null) {
-            //todo add why...
-            tests.add(new JiraTestCase(key, TestResult.BLOCKED));
+            JiraTestCase testCase = new JiraTestCase(key, TestResult.BLOCKED);
+            StringBuilder blockReasons = new StringBuilder();
+            String methodName = TestNGUtils.getMethodName(iTestResult);
+            Integer dependencyCounter = 0;
+
+            blockReasons.append("Test method ").append(methodName).append(" ").append(testCase).append(" depends on");
+            addMethodDependencies(dependencyCounter, blockReasons, getTestMethodDependencies(iTestResult));
+            addGroupDependencies(dependencyCounter, blockReasons, getTestGroupsDependencies(iTestResult));
+
+            testCase.addComment(blockReasons.toString());
+            tests.add(testCase);
+        }
+    }
+
+    private void addMethodDependencies(Integer dependencyCounter, StringBuilder builder, String [] methods) {
+        for (String method : methods) {
+            if (failedMethods.containsKey(method)) {
+                if (dependencyCounter++ > 0) builder.append(",");
+                builder.append(" method ").append(method);
+                JiraTestCase failedCase = failedMethods.get(method);
+                if (failedCase != null) builder.append(" ").append(failedCase);
+            }
+        }
+    }
+
+    private void addGroupDependencies(Integer dependencyCounter, StringBuilder builder, String [] groups) {
+        for (String group : groups) {
+            if (failedGroups.containsKey(group)) {
+                if (dependencyCounter++ > 0) builder.append(",");
+                builder.append(" group ").append(group);
+                List<JiraTestCase> groupTestCases = failedGroups.get(group);
+                if (groupTestCases != null && !groupTestCases.isEmpty())
+                    builder.append(" with next failed cases: {").append(System.lineSeparator())
+                            .append(groupTestCases.stream().map(String::valueOf).collect(Collectors.joining(", ")))
+                            .append("}");
+            }
         }
     }
 
@@ -75,43 +114,16 @@ public class ExecutionListener extends TestListenerAdapter {
     public void onFinish(ITestContext iTestContext) {
         super.onFinish(iTestContext);
         for(ITestNGMethod method : iTestContext.getExcludedMethods()) {
-            String key = getTestJIRATestKey(method);
+            String key = TestNGUtils.getTestJIRATestKey(method);
             if (key != null) {
                 tests.add(new JiraTestCase(key, TestResult.UNTESTED));
             }
         }
-
-        XMLWriter.writeXmlFile(tests, "./target/tm-testng.xml");
+        if (!tests.isEmpty())
+            FileUtils.writeXmlFile(tests, "./target/tm-testng.xml");
     }
 
-    private String getTestJIRATestKey(ITestResult result) {
-        return getTestJIRATestKey(result.getMethod());
-    }
 
-    private String getTestJIRATestKey(ITestNGMethod testNGMethod) {
-        Method method = testNGMethod.getConstructorOrMethod().getMethod();
-        JIRATestKey annotation = method.getAnnotation(JIRATestKey.class);
-        if (annotation != null) {
-            return annotation.key();
-        }
-        return null;
-    }
 
-    private String [] getTestMethodDependencies(ITestResult result) {
-        Method method = result.getMethod().getConstructorOrMethod().getMethod();
-        Test annotation = method.getAnnotation(Test.class);
-        if (annotation != null) {
-            return annotation.dependsOnMethods();
-        }
-        return null;
-    }
 
-    private String [] getTestGroupsDependencies(ITestResult result) {
-        Method method = result.getMethod().getConstructorOrMethod().getMethod();
-        Test annotation = method.getAnnotation(Test.class);
-        if (annotation != null) {
-            return annotation.dependsOnGroups();
-        }
-        return null;
-    }
 }
