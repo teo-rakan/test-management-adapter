@@ -90,4 +90,4 @@ Mark tests with `@JIRATestKey` tag.
   }
 ```
 
-After running the `tm.xml` results file will be created in your project `target` directory.
+After running the `tm-testng.xml` results file will be created in your project `target` directory.
