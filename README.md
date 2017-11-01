@@ -19,7 +19,7 @@ After that you need to add next dependency to your pom-file:
 ```
 
 ## ExecutionListener
-Add `ExecutionListener` to your JUnit or TestNG listeners. 
+Add `ExecutionListener` to your TestNG listeners. 
 
 * Using **maven-surefire-plugin** in your *pom.xml*
 
