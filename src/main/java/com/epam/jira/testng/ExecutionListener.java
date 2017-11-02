@@ -19,7 +19,7 @@ public class ExecutionListener extends TestListenerAdapter {
     private List<JiraTestCase> tests = new ArrayList<>();
     private Map<String, JiraTestCase> failedMethods = new HashMap<>();
     private Map<String, List<JiraTestCase>> failedGroups = new HashMap<>();
-    private final String TARGET_DIR = "/target/";
+    private final String TARGET_DIR = "\\target\\";
 
     @Override
     public void onTestSuccess(ITestResult iTestResult) {
