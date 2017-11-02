@@ -19,7 +19,7 @@ public class ExecutionListener extends TestListenerAdapter {
     private List<JiraTestCase> tests = new ArrayList<>();
     private Map<String, JiraTestCase> failedMethods = new HashMap<>();
     private Map<String, List<JiraTestCase>> failedGroups = new HashMap<>();
-    private final String TARGET_DIR = "/target";
+    private final String TARGET_DIR = "/target/";
 
     @Override
     public void onTestSuccess(ITestResult iTestResult) {
@@ -51,17 +51,17 @@ public class ExecutionListener extends TestListenerAdapter {
             if (throwable instanceof AssertionError) {
                 comment = "Assertion failed: " + throwable.getMessage();
             } else {
-                String filePath = TARGET_DIR + "/stacktrace-" + key  + ".txt";
+                String filePath = TARGET_DIR + "stacktrace-" + key  + ".txt";
                 FileUtils.writeStackTrace(throwable, filePath);
                 testCase.addFilePath(filePath);
                 comment = "Failed due to: " + throwable.getClass().getName() + ": " + throwable.getMessage()
-                        + " . Full stack trace attached as 'stacktrace-" + key  + ".txt'";
+                        + ". Full stack trace attached as 'stacktrace-" + key  + ".txt'";
             }
 
             // Save screenshot if possible
             if (screenshot != null) {
                 testCase.addFilePath(TARGET_DIR + screenshot);
-                comment += ". Screenshot attached: " + screenshot;
+                comment += ". Screenshot attached as '" + screenshot + "'";
             }
             testCase.addComment(comment);
             tests.add(testCase);
@@ -140,7 +140,7 @@ public class ExecutionListener extends TestListenerAdapter {
             }
         }
         if (!tests.isEmpty())
-            FileUtils.writeXmlFile(tests, TARGET_DIR + "/tm-testng.xml");
+            FileUtils.writeXmlFile(tests, TARGET_DIR + "tm-testng.xml");
     }
 
 

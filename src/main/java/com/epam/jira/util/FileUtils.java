@@ -1,6 +1,7 @@
 package com.epam.jira.util;
 
 import com.epam.jira.core.JiraTestCase;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -21,11 +22,7 @@ public class FileUtils {
     public static void writeStackTrace(Throwable throwable, String filePath) {
         try {
             PrintWriter writer = new PrintWriter("." + filePath, "UTF-8");
-            writer.println(throwable.getMessage());
-
-            for (StackTraceElement element : throwable.getStackTrace())
-                writer.println(element.toString());
-
+            writer.print(ExceptionUtils.getStackTrace(throwable));
             writer.close();
         } catch (FileNotFoundException | UnsupportedEncodingException e) {
             e.printStackTrace();
