@@ -19,6 +19,7 @@ public class ExecutionListener extends TestListenerAdapter {
     private List<JiraTestCase> tests = new ArrayList<>();
     private Map<String, JiraTestCase> failedMethods = new HashMap<>();
     private Map<String, List<JiraTestCase>> failedGroups = new HashMap<>();
+    private final String TARGET_DIR = "/target";
 
     @Override
     public void onTestSuccess(ITestResult iTestResult) {
@@ -40,7 +41,7 @@ public class ExecutionListener extends TestListenerAdapter {
             String screenshot = null;
             String comment;
             if (Screenshoter.isInitialized()) {
-                screenshot = Screenshoter.takeScreenshot("/target");
+                screenshot = Screenshoter.takeScreenshot(TARGET_DIR);
             }
 
             testCase = new JiraTestCase(key, TestResult.FAILED);
@@ -50,7 +51,7 @@ public class ExecutionListener extends TestListenerAdapter {
             if (throwable instanceof AssertionError) {
                 comment = "Assertion failed: " + throwable.getMessage();
             } else {
-                String filePath = "/target/stacktrace-" + key  + ".txt";
+                String filePath = TARGET_DIR + "/stacktrace-" + key  + ".txt";
                 FileUtils.writeStackTrace(throwable, filePath);
                 testCase.addFilePath(filePath);
                 comment = "Failed due to: " + throwable.getClass().getName() + ": " + throwable.getMessage()
@@ -59,8 +60,8 @@ public class ExecutionListener extends TestListenerAdapter {
 
             // Save screenshot if possible
             if (screenshot != null) {
-                testCase.addFilePath(screenshot);
-                comment += " . Screenshot attached: " + screenshot;
+                testCase.addFilePath(TARGET_DIR + screenshot);
+                comment += ". Screenshot attached: " + screenshot;
             }
             testCase.addComment(comment);
             tests.add(testCase);
@@ -139,7 +140,7 @@ public class ExecutionListener extends TestListenerAdapter {
             }
         }
         if (!tests.isEmpty())
-            FileUtils.writeXmlFile(tests, "./target/tm-testng.xml");
+            FileUtils.writeXmlFile(tests, TARGET_DIR + "/tm-testng.xml");
     }
 
 

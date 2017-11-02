@@ -16,12 +16,6 @@ public class JiraTestCase {
         this.status = status;
     }
 
-    public JiraTestCase(String jiraTestKey, String failedAssertMessage) {
-        this.jiraTestKey = jiraTestKey;
-        this.status = TestResult.FAILED;
-        this.comments.add("Failed due to: " + failedAssertMessage);
-    }
-
     public String getJiraTestKey() {
         return jiraTestKey;
     }
