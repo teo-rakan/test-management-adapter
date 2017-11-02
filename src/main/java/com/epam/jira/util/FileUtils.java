@@ -20,7 +20,7 @@ public class FileUtils {
 
     public static void writeStackTrace(Throwable throwable, String filePath) {
         try {
-            PrintWriter writer = new PrintWriter(filePath, "UTF-8");
+            PrintWriter writer = new PrintWriter("." + filePath, "UTF-8");
             writer.println(throwable.getMessage());
 
             for (StackTraceElement element : throwable.getStackTrace())
@@ -65,7 +65,7 @@ public class FileUtils {
 
         DOMSource source = new DOMSource(doc);
         try {
-            FileWriter fos = new FileWriter(filePath);
+            FileWriter fos = new FileWriter("." + filePath);
             StreamResult result = new StreamResult(fos);
             aTransformer.transform(source, result);
         } catch (IOException e) {
