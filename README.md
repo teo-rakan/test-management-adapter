@@ -8,6 +8,7 @@ mvn install::install-file -Dfile=test-management-1.5.jar
                           -Dversion=1.5 
                           -Dpackaging=jar
 ```
+**For copy-paste:** `mvn install::install-file -Dfile=test-management-1.5.jar -DgroupId=com.epam.jira -DartifactId=test-management -Dversion=1.5 -Dpackaging=jar`
 
 After that you need to add next dependency to your pom-file: 
 ```bash
