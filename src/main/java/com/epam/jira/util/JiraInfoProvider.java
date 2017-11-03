@@ -2,7 +2,6 @@ package com.epam.jira.util;
 
 import com.epam.jira.JIRATestKey;
 import com.epam.jira.entity.Parameter;
-import com.epam.jira.util.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,6 +55,7 @@ public class JiraInfoProvider {
 
         if (key == null) return null;
         if (!file.exists() || !file.isFile()) return null;
+        //todo save virtual ?
 
         String currentDir = System.getProperty("user.dir");
         String targetFilePath = null;
@@ -64,7 +64,7 @@ public class JiraInfoProvider {
         try {
             String filePath = file.getCanonicalPath();
             if (!filePath.startsWith(currentDir + FileUtils.getTargetDir())) {
-                targetFilePath = FileUtils.getTargetDir() + file.getName();
+                targetFilePath = FileUtils.getAttachmentsDir() + file.getName();
                 File copy = new File("." + targetFilePath);
                 org.apache.commons.io.FileUtils.copyFile(file, copy);
             } else {

@@ -45,7 +45,7 @@ public class ExecutionListener extends TestListenerAdapter {
             String screenshot = null;
             String summary;
             if (Screenshoter.isInitialized()) {
-                screenshot = Screenshoter.takeScreenshot(FileUtils.getTargetDir());
+                screenshot = Screenshoter.takeScreenshot();
             }
 
             issue = new Issue(key, TestResult.FAILED, TestNGUtils.getTimeAsString(result));
@@ -57,14 +57,14 @@ public class ExecutionListener extends TestListenerAdapter {
             } else {
                 String filePath = "stacktrace-" + System.nanoTime()  + ".txt";
                 FileUtils.writeStackTrace(throwable, filePath);
-                attachments.add(FileUtils.getTargetDir() + filePath);
+                attachments.add(FileUtils.getAttachmentsDir() + filePath);
                 summary = "Failed due to: " + throwable.getClass().getName() + ": " + throwable.getMessage()
                         + ". Full stack trace attached as " + filePath;
             }
 
             // Save screenshot if possible
             if (screenshot != null) {
-                attachments.add(FileUtils.getTargetDir() + screenshot);
+                attachments.add(FileUtils.getAttachmentsDir() + screenshot);
                 summary += ". Screenshot attached as " + screenshot;
             }
             issue.setSummary(summary);

@@ -11,14 +11,28 @@ import java.io.*;
 public class FileUtils {
 
     private final static String TARGET_DIR = "\\target\\";
+    private final static String ATTACHMENTS_DIR = TARGET_DIR + "attachments\\";
 
     public static void writeStackTrace(Throwable throwable, String filePath) {
         try {
-            PrintWriter writer = new PrintWriter("." + TARGET_DIR + filePath, "UTF-8");
-            writer.print(ExceptionUtils.getStackTrace(throwable));
-            writer.close();
-        } catch (FileNotFoundException | UnsupportedEncodingException e) {
+            File temp = File.createTempFile("stacktrace", ".tmp");
+            BufferedWriter out = new BufferedWriter(new FileWriter(temp));
+            out.write(ExceptionUtils.getStackTrace(throwable));
+            out.close();
+            saveFile(temp, filePath);
+            temp.delete();
+        } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public static boolean saveFile(File file, String newFilePath) {
+        try {
+            File copy = new File("." + ATTACHMENTS_DIR + newFilePath);
+            org.apache.commons.io.FileUtils.copyFile(file, copy);
+            return true;
+        } catch (IOException e) {
+            return false;
         }
     }
 
@@ -35,5 +49,9 @@ public class FileUtils {
 
     public static String getTargetDir() {
         return TARGET_DIR;
+    }
+
+    public static String getAttachmentsDir() {
+        return ATTACHMENTS_DIR;
     }
 }
