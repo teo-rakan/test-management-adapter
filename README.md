@@ -88,6 +88,13 @@ You should initialize Screenshoter class with WebDriver instance in order to att
     }
 ```
 
+## Useful rtifacts
+You can store useful informatian such as string values (with title) or files using JiraInfoProvider class.
+```bash
+    JiraInfoProvider.saveFile(new File("path_to_file"));
+    JiraInfoProvider.saveValue("Title", "Some value");
+```
+
 ## @JIRATestKey
 Mark tests with `@JIRATestKey` tag.
 
