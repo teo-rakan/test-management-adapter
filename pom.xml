@@ -4,7 +4,7 @@
 
     <groupId>com.epam.jira</groupId>
     <artifactId>test-management</artifactId>
-    <version>1.4</version>
+    <version>1.5</version>
     <packaging>jar</packaging>
 
     <name>QASpace Test Management Annotation</name>
