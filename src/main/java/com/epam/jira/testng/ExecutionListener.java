@@ -55,17 +55,17 @@ public class ExecutionListener extends TestListenerAdapter {
             if (throwable instanceof AssertionError) {
                 summary = "Assertion failed: " + throwable.getMessage();
             } else {
-                String filePath = "stacktrace-" + key  + ".txt";
+                String filePath = "stacktrace-" + System.nanoTime()  + ".txt";
                 FileUtils.writeStackTrace(throwable, filePath);
                 attachments.add(FileUtils.getTargetDir() + filePath);
                 summary = "Failed due to: " + throwable.getClass().getName() + ": " + throwable.getMessage()
-                        + ". Full stack trace attached as 'stacktrace-" + key  + ".txt'";
+                        + ". Full stack trace attached as " + filePath;
             }
 
             // Save screenshot if possible
             if (screenshot != null) {
                 attachments.add(FileUtils.getTargetDir() + screenshot);
-                summary += ". Screenshot attached as '" + screenshot + "'";
+                summary += ". Screenshot attached as " + screenshot;
             }
             issue.setSummary(summary);
             if (!attachments.isEmpty())

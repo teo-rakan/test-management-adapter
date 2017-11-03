@@ -22,14 +22,6 @@ public class Issue {
     @XmlElement(name = "parameter")
     private List<Parameter> parameters;
 
-    public Issue(String issueKey, String status, String summary, List<String> attachments, List<Parameter> parameters) {
-        this.issueKey = issueKey;
-        this.status = status;
-        this.summary = summary;
-        this.attachments = attachments;
-        this.parameters = parameters;
-    }
-
     public Issue(String issueKey, TestResult status) {
         this.issueKey = issueKey;
         this.status = status.toString();

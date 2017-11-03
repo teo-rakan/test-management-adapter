@@ -30,8 +30,6 @@ public class Issues {
 
     @Override
     public String toString() {
-        return "Issues{" +
-                "issues=" + issues +
-                '}';
+        return "Issues{" + "issues=" + issues + '}';
     }
 }
