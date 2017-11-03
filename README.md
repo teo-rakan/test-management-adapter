@@ -8,6 +8,7 @@ mvn install::install-file -Dfile=test-management-1.5.jar
                           -Dversion=1.5 
                           -Dpackaging=jar
 ```
+**For copy-paste:** `mvn install::install-file -Dfile=test-management-1.5.jar -DgroupId=com.epam.jira -DartifactId=test-management -Dversion=1.5 -Dpackaging=jar`
 
 After that you need to add next dependency to your pom-file: 
 ```bash
@@ -86,6 +87,13 @@ You should initialize Screenshoter class with WebDriver instance in order to att
     public void initialize() {
         Screenshoter.initialize(driver);
     }
+```
+
+## Store information
+You can store useful informatian such as string values (with title) or files using JiraInfoProvider class.
+```bash
+    JiraInfoProvider.saveFile(new File("path_to_file"));
+    JiraInfoProvider.saveValue("Title", "Some value");
 ```
 
 ## @JIRATestKey
