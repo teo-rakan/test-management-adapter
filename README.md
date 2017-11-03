@@ -1,4 +1,4 @@
-# TestManagementAnnotation
+# Test Management Adapter
 
 You could install this artifact on a specific local repository by using maven install-file goal.
 ```bash
