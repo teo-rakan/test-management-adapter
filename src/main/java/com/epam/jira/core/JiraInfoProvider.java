@@ -56,7 +56,6 @@ public class JiraInfoProvider {
         if (key == null) return null;
         if (!file.exists() || !file.isFile()) return null;
 
-        System.out.println("FILE NOT NULL");
         String currentDir = System.getProperty("user.dir");
         String targetFilePath = null;
 
