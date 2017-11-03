@@ -1,4 +1,4 @@
-package com.epam.jira.core;
+package com.epam.jira.entity;
 
 public enum TestResult {
 

@@ -1,7 +1,12 @@
 package com.epam.jira.testng;
 
-import com.epam.jira.core.*;
+import com.epam.jira.entity.Issue;
+import com.epam.jira.entity.Issues;
+import com.epam.jira.entity.Parameter;
+import com.epam.jira.entity.TestResult;
 import com.epam.jira.util.FileUtils;
+import com.epam.jira.util.JiraInfoProvider;
+import com.epam.jira.util.Screenshoter;
 import org.testng.ITestContext;
 import org.testng.ITestNGMethod;
 import org.testng.ITestResult;

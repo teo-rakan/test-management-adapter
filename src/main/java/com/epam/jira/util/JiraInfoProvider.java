@@ -1,6 +1,7 @@
-package com.epam.jira.core;
+package com.epam.jira.util;
 
 import com.epam.jira.JIRATestKey;
+import com.epam.jira.entity.Parameter;
 import com.epam.jira.util.FileUtils;
 
 import java.io.File;

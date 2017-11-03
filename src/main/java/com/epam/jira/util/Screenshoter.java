@@ -1,4 +1,4 @@
-package com.epam.jira.core;
+package com.epam.jira.util;
 
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.OutputType;

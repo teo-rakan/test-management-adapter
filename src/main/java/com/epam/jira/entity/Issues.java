@@ -1,4 +1,4 @@
-package com.epam.jira.core;
+package com.epam.jira.entity;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

@@ -1,6 +1,6 @@
 package com.epam.jira.util;
 
-import com.epam.jira.core.Issues;
+import com.epam.jira.entity.Issues;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import javax.xml.bind.JAXBContext;

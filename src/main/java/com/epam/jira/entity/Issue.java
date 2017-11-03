@@ -1,4 +1,4 @@
-package com.epam.jira.core;
+package com.epam.jira.entity;
 
 import javax.xml.bind.annotation.*;
 import java.util.List;
