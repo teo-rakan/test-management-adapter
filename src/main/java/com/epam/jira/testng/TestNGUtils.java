@@ -52,4 +52,8 @@ class TestNGUtils {
         }
         return null;
     }
+
+    static String getTimeAsString(ITestResult result) {
+        return ((result.getEndMillis() - result.getStartMillis()) / 1000.0) + " s";
+    }
 }

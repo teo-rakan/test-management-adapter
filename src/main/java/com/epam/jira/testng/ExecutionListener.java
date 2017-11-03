@@ -1,13 +1,12 @@
 package com.epam.jira.testng;
 
-import com.epam.jira.core.JiraTestCase;
-import com.epam.jira.core.Screenshoter;
-import com.epam.jira.core.TestResult;
+import com.epam.jira.core.*;
 import com.epam.jira.util.FileUtils;
 import org.testng.ITestContext;
 import org.testng.ITestNGMethod;
 import org.testng.ITestResult;
 import org.testng.TestListenerAdapter;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -16,92 +15,94 @@ import static com.epam.jira.testng.TestNGUtils.getTestMethodDependencies;
 
 public class ExecutionListener extends TestListenerAdapter {
 
-    private List<JiraTestCase> tests = new ArrayList<>();
-    private Map<String, JiraTestCase> failedMethods = new HashMap<>();
-    private Map<String, List<JiraTestCase>> failedGroups = new HashMap<>();
-    private final String TARGET_DIR = "\\target\\";
+    private List<Issue> issues = new ArrayList<>();
+    private Map<String, Issue> failedMethods = new HashMap<>();
+    private Map<String, List<Issue>> failedGroups = new HashMap<>();
 
     @Override
-    public void onTestSuccess(ITestResult iTestResult) {
-        super.onTestSuccess(iTestResult);
-        String key = TestNGUtils.getTestJIRATestKey(iTestResult);
+    public void onTestSuccess(ITestResult result) {
+        super.onTestSuccess(result);
+        String key = TestNGUtils.getTestJIRATestKey(result);
         if (key != null) {
-            tests.add(new JiraTestCase(key, TestResult.PASSED));
+            issues.add(new Issue(key, TestResult.PASSED, TestNGUtils.getTimeAsString(result)));
         }
     }
 
     @Override
-    public void onTestFailure(ITestResult iTestResult) {
-        super.onTestFailure(iTestResult);
+    public void onTestFailure(ITestResult result) {
+        super.onTestFailure(result);
 
-        String key = TestNGUtils.getTestJIRATestKey(iTestResult);
-        JiraTestCase testCase = null;
+        String key = TestNGUtils.getTestJIRATestKey(result);
+        Issue issue = null;
+        List<String> attachments = new ArrayList<>();
 
         if (key != null) {
             String screenshot = null;
-            String comment;
+            String summary;
             if (Screenshoter.isInitialized()) {
-                screenshot = Screenshoter.takeScreenshot(TARGET_DIR);
+                screenshot = Screenshoter.takeScreenshot(FileUtils.getTargetDir());
             }
 
-            testCase = new JiraTestCase(key, TestResult.FAILED);
+            issue = new Issue(key, TestResult.FAILED, TestNGUtils.getTimeAsString(result));
 
             // Save failure message and/or trace
-            Throwable throwable = iTestResult.getThrowable();
+            Throwable throwable = result.getThrowable();
             if (throwable instanceof AssertionError) {
-                comment = "Assertion failed: " + throwable.getMessage();
+                summary = "Assertion failed: " + throwable.getMessage();
             } else {
-                String filePath = TARGET_DIR + "stacktrace-" + key  + ".txt";
+                String filePath = "stacktrace-" + key  + ".txt";
                 FileUtils.writeStackTrace(throwable, filePath);
-                testCase.addFilePath(filePath);
-                comment = "Failed due to: " + throwable.getClass().getName() + ": " + throwable.getMessage()
+                attachments.add(FileUtils.getTargetDir() + filePath);
+                summary = "Failed due to: " + throwable.getClass().getName() + ": " + throwable.getMessage()
                         + ". Full stack trace attached as 'stacktrace-" + key  + ".txt'";
             }
 
             // Save screenshot if possible
             if (screenshot != null) {
-                testCase.addFilePath(TARGET_DIR + screenshot);
-                comment += ". Screenshot attached as '" + screenshot + "'";
+                attachments.add(FileUtils.getTargetDir() + screenshot);
+                summary += ". Screenshot attached as '" + screenshot + "'";
             }
-            testCase.addComment(comment);
-            tests.add(testCase);
+            issue.setSummary(summary);
+            if (!attachments.isEmpty())
+                issue.setAttachments(attachments);
+            issues.add(issue);
         }
-        saveMethodAndGroupsInFailed(iTestResult, testCase);
+        saveMethodAndGroupsInFailed(result, issue);
 
 
     }
 
-    private void saveMethodAndGroupsInFailed(ITestResult iTestResult, JiraTestCase testCase) {
-        String [] groups = TestNGUtils.getMethodGroups(iTestResult);
-        String methodName = TestNGUtils.getMethodName(iTestResult);
+    private void saveMethodAndGroupsInFailed(ITestResult result, Issue issue) {
+        String [] groups = TestNGUtils.getMethodGroups(result);
+        String methodName = TestNGUtils.getMethodName(result);
 
-        failedMethods.put(methodName, testCase);
+        failedMethods.put(methodName, issue);
         for (String group : groups) {
-            List<JiraTestCase> testCases = failedGroups.get(group);
-            if (testCases != null) {
-                testCases.add(testCase);
+            List<Issue> issues = failedGroups.get(group);
+            if (issues != null) {
+                issues.add(issue);
             } else {
-                failedGroups.put(group, Arrays.asList(testCase));
+                failedGroups.put(group, Arrays.asList(issue));
             }
         }
     }
 
     @Override
-    public void onTestSkipped(ITestResult iTestResult) {
-        super.onTestSkipped(iTestResult);
-        String key = TestNGUtils.getTestJIRATestKey(iTestResult);
+    public void onTestSkipped(ITestResult result) {
+        super.onTestSkipped(result);
+        String key = TestNGUtils.getTestJIRATestKey(result);
         if (key != null) {
-            JiraTestCase testCase = new JiraTestCase(key, TestResult.BLOCKED);
+            Issue testCase = new Issue(key, TestResult.BLOCKED);
             StringBuilder blockReasons = new StringBuilder();
-            String methodName = TestNGUtils.getMethodName(iTestResult);
+            String methodName = TestNGUtils.getMethodName(result);
             Integer dependencyCounter = 0;
 
             blockReasons.append("Test method ").append(methodName).append(" ").append(testCase).append(" depends on");
-            addMethodDependencies(dependencyCounter, blockReasons, getTestMethodDependencies(iTestResult));
-            addGroupDependencies(dependencyCounter, blockReasons, getTestGroupsDependencies(iTestResult));
+            addMethodDependencies(dependencyCounter, blockReasons, getTestMethodDependencies(result));
+            addGroupDependencies(dependencyCounter, blockReasons, getTestGroupsDependencies(result));
 
-            testCase.addComment(blockReasons.toString());
-            tests.add(testCase);
+            testCase.setSummary(blockReasons.toString());
+            issues.add(testCase);
         }
     }
 
@@ -110,7 +111,7 @@ public class ExecutionListener extends TestListenerAdapter {
             if (failedMethods.containsKey(method)) {
                 if (dependencyCounter++ > 0) builder.append(",");
                 builder.append(" method ").append(method);
-                JiraTestCase failedCase = failedMethods.get(method);
+                Issue failedCase = failedMethods.get(method);
                 if (failedCase != null) builder.append(" ").append(failedCase);
             }
         }
@@ -121,7 +122,7 @@ public class ExecutionListener extends TestListenerAdapter {
             if (failedGroups.containsKey(group)) {
                 if (dependencyCounter++ > 0) builder.append(",");
                 builder.append(" group ").append(group);
-                List<JiraTestCase> groupTestCases = failedGroups.get(group);
+                List<Issue> groupTestCases = failedGroups.get(group);
                 if (groupTestCases != null && !groupTestCases.isEmpty())
                     builder.append(" with next failed cases: {").append(System.lineSeparator())
                             .append(groupTestCases.stream().map(String::valueOf).collect(Collectors.joining(", ")))
@@ -131,16 +132,31 @@ public class ExecutionListener extends TestListenerAdapter {
     }
 
     @Override
-    public void onFinish(ITestContext iTestContext) {
-        super.onFinish(iTestContext);
-        for(ITestNGMethod method : iTestContext.getExcludedMethods()) {
+    public void onFinish(ITestContext context) {
+        super.onFinish(context);
+        for(ITestNGMethod method : context.getExcludedMethods()) {
             String key = TestNGUtils.getTestJIRATestKey(method);
             if (key != null) {
-                tests.add(new JiraTestCase(key, TestResult.UNTESTED));
+                issues.add(new Issue(key, TestResult.UNTESTED));
             }
         }
-        if (!tests.isEmpty())
-            FileUtils.writeXmlFile(tests, TARGET_DIR + "tm-testng.xml");
+
+        for(Issue issue : issues) {
+            List<String> attachments = JiraInfoProvider.getIssueAttachments(issue.getIssueKey());
+            List<Parameter> parameters = JiraInfoProvider.getIssueParameters(issue.getIssueKey());
+            if (attachments != null) {
+                if (issue.getAttachments() != null)
+                    issue.getAttachments().addAll(attachments);
+                else
+                    issue.setAttachments(attachments);
+            }
+            if (parameters != null) {
+                issue.setParameters(parameters);
+            }
+        }
+
+        if (!issues.isEmpty())
+            FileUtils.writeXml(new Issues(issues), "tm-testng.xml");
     }
 
 
