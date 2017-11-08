@@ -9,8 +9,12 @@ import java.lang.reflect.Method;
 
 class TestNGUtils {
 
-    static String getMethodName (ITestResult result) {
-        return result.getMethod().getConstructorOrMethod().getMethod().getName();
+    static String getFullMethodName (ITestResult result) {
+        return result.getMethod().getTestClass().getName() + "." + result.getMethod().getConstructorOrMethod().getMethod().getName();
+    }
+
+    static String getTestClassName (ITestResult result) {
+        return result.getMethod().getTestClass().getName();
     }
 
     static String [] getMethodGroups (ITestResult result) {
@@ -54,6 +58,14 @@ class TestNGUtils {
     }
 
     static String getTimeAsString(ITestResult result) {
-        return ((result.getEndMillis() - result.getStartMillis()) / 1000.0) + " s";
+        long timeDiff = result.getEndMillis() - result.getStartMillis();
+        String formattedResult;
+        if (timeDiff < 10)
+            formattedResult = timeDiff + " ms";
+        else if (timeDiff < 60000)
+            formattedResult = (timeDiff / 1000.0) + " s";
+        else
+            formattedResult = (timeDiff / 60000.0) + " min";
+        return formattedResult;
     }
 }

@@ -15,6 +15,7 @@ import org.testng.TestListenerAdapter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.epam.jira.testng.TestNGUtils.getTestClassName;
 import static com.epam.jira.testng.TestNGUtils.getTestGroupsDependencies;
 import static com.epam.jira.testng.TestNGUtils.getTestMethodDependencies;
 
@@ -77,7 +78,7 @@ public class ExecutionListener extends TestListenerAdapter {
 
     private void saveMethodAndGroupsInFailed(ITestResult result, Issue issue) {
         String [] groups = TestNGUtils.getMethodGroups(result);
-        String methodName = TestNGUtils.getMethodName(result);
+        String methodName = TestNGUtils.getFullMethodName(result);
 
         failedMethods.put(methodName, issue);
         for (String group : groups) {
@@ -85,7 +86,9 @@ public class ExecutionListener extends TestListenerAdapter {
             if (issues != null) {
                 issues.add(issue);
             } else {
-                failedGroups.put(group, Arrays.asList(issue));
+                List<Issue> failedIssues = new ArrayList<>();
+                failedIssues.add(issue);
+                failedGroups.put(group, failedIssues);
             }
         }
     }
@@ -97,41 +100,49 @@ public class ExecutionListener extends TestListenerAdapter {
         if (key != null) {
             Issue testCase = new Issue(key, TestResult.BLOCKED);
             StringBuilder blockReasons = new StringBuilder();
-            String methodName = TestNGUtils.getMethodName(result);
+            String methodName = TestNGUtils.getFullMethodName(result);
             Integer dependencyCounter = 0;
 
-            blockReasons.append("Test method ").append(methodName).append(" ").append(testCase).append(" depends on");
-            addMethodDependencies(dependencyCounter, blockReasons, getTestMethodDependencies(result));
-            addGroupDependencies(dependencyCounter, blockReasons, getTestGroupsDependencies(result));
+            blockReasons.append("Test method ").append(methodName).append(" (").append(testCase.getIssueKey())
+                    .append(") depends on");
+            dependencyCounter = addMethodDependencies(dependencyCounter, blockReasons, result);
+            addGroupDependencies(dependencyCounter, blockReasons, result);
 
             testCase.setSummary(blockReasons.toString());
             issues.add(testCase);
         }
     }
 
-    private void addMethodDependencies(Integer dependencyCounter, StringBuilder builder, String [] methods) {
+    //todo move
+    private int addMethodDependencies(int dependencyCounter, StringBuilder builder, ITestResult result) {
+        String [] methods = getTestMethodDependencies(result);
+        String testClassName = getTestClassName(result);
         for (String method : methods) {
-            if (failedMethods.containsKey(method)) {
+            String fullMethodName = testClassName + "." + method;
+            if (failedMethods.containsKey(fullMethodName)) {
                 if (dependencyCounter++ > 0) builder.append(",");
-                builder.append(" method ").append(method);
-                Issue failedCase = failedMethods.get(method);
-                if (failedCase != null) builder.append(" ").append(failedCase);
+                builder.append(" method ").append(fullMethodName);
+                Issue failedCase = failedMethods.get(fullMethodName);
+                if (failedCase != null) builder.append(" (").append(failedCase.getIssueKey()).append(")");
             }
         }
+        return dependencyCounter;
     }
 
-    private void addGroupDependencies(Integer dependencyCounter, StringBuilder builder, String [] groups) {
+    private int addGroupDependencies(int dependencyCounter, StringBuilder builder, ITestResult result) {
+        String [] groups = getTestGroupsDependencies(result);
         for (String group : groups) {
             if (failedGroups.containsKey(group)) {
                 if (dependencyCounter++ > 0) builder.append(",");
-                builder.append(" group ").append(group);
+                builder.append(" group \"").append(group).append("\"");
                 List<Issue> groupTestCases = failedGroups.get(group);
                 if (groupTestCases != null && !groupTestCases.isEmpty())
-                    builder.append(" with next failed cases: {").append(System.lineSeparator())
-                            .append(groupTestCases.stream().map(String::valueOf).collect(Collectors.joining(", ")))
-                            .append("}");
+                    builder.append(" with next failed cases: (")
+                           .append(groupTestCases.stream().map(tc -> tc.getIssueKey()).collect(Collectors.joining(", ")))
+                            .append(")");
             }
         }
+        return dependencyCounter;
     }
 
     @Override
