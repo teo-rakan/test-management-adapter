@@ -12,6 +12,7 @@ import org.testng.ITestNGMethod;
 import org.testng.ITestResult;
 import org.testng.TestListenerAdapter;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,7 +22,7 @@ import static com.epam.jira.testng.TestNGUtils.getTestMethodDependencies;
 
 public class ExecutionListener extends TestListenerAdapter {
 
-    private final String STACK_TRACE_FILE = "stacktrace-%d.txt";
+    private final String STACK_TRACE_FILE = "stacktrace_%s.txt";
     private List<Issue> issues = new ArrayList<>();
     private Map<String, Issue> failedMethods = new HashMap<>();
     private Map<String, List<Issue>> failedGroups = new HashMap<>();
@@ -54,7 +55,7 @@ public class ExecutionListener extends TestListenerAdapter {
             if (throwable instanceof AssertionError) {
                 summary = "Assertion failed: " + throwable.getMessage();
             } else {
-                String filePath = String.format(STACK_TRACE_FILE, System.nanoTime());
+                String filePath = String.format(STACK_TRACE_FILE, LocalDateTime.now().toString().replace(":","-"));
                 FileUtils.writeStackTrace(throwable, filePath);
                 attachments.add(FileUtils.getAttachmentsDir() + filePath);
                 summary = "Failed due to: " + throwable.getClass().getName() + ": " + throwable.getMessage()

@@ -6,10 +6,11 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 import java.io.File;
+import java.time.LocalDateTime;
 
 
 public class Screenshoter {
-    private final static String SCREENSHOT_FILE = "scr_%d.png";
+    private final static String SCREENSHOT_FILE = "scr_%s.png";
     private static WebDriver driverInstance;
 
     public static void initialize(WebDriver driver) {
@@ -29,7 +30,7 @@ public class Screenshoter {
         }
 
         File screenshot = ((TakesScreenshot) driverInstance).getScreenshotAs(OutputType.FILE);
-        String screenshotName = String.format(SCREENSHOT_FILE, System.nanoTime());
+        String screenshotName = String.format(SCREENSHOT_FILE, LocalDateTime.now().toString().replace(":","-"));
         String filePath = FileUtils.saveFile(screenshot, screenshotName);
 
         return filePath != null ? screenshotName : null;
