@@ -20,6 +20,7 @@ import static com.epam.jira.testng.TestNGUtils.getTestMethodDependencies;
 
 public class ExecutionListener extends TestListenerAdapter {
 
+    private final String STACK_TRACE_FILE = "stacktrace-%d.txt";
     private List<Issue> issues = new ArrayList<>();
     private Map<String, Issue> failedMethods = new HashMap<>();
     private Map<String, List<Issue>> failedGroups = new HashMap<>();
@@ -42,11 +43,8 @@ public class ExecutionListener extends TestListenerAdapter {
         List<String> attachments = new ArrayList<>();
 
         if (key != null) {
-            String screenshot = null;
+            String screenshot = Screenshoter.isInitialized() ? Screenshoter.takeScreenshot() : null;
             String summary;
-            if (Screenshoter.isInitialized()) {
-                screenshot = Screenshoter.takeScreenshot();
-            }
 
             issue = new Issue(key, TestResult.FAILED, TestNGUtils.getTimeAsString(result));
 
@@ -55,7 +53,7 @@ public class ExecutionListener extends TestListenerAdapter {
             if (throwable instanceof AssertionError) {
                 summary = "Assertion failed: " + throwable.getMessage();
             } else {
-                String filePath = "stacktrace-" + System.nanoTime()  + ".txt";
+                String filePath = String.format(STACK_TRACE_FILE, System.nanoTime());
                 FileUtils.writeStackTrace(throwable, filePath);
                 attachments.add(FileUtils.getAttachmentsDir() + filePath);
                 summary = "Failed due to: " + throwable.getClass().getName() + ": " + throwable.getMessage()

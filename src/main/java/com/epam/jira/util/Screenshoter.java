@@ -9,6 +9,7 @@ import java.io.File;
 
 
 public class Screenshoter {
+    private final static String SCREENSHOT_FILE = "scr_%d.png";
     private static WebDriver driverInstance;
 
     public static void initialize(WebDriver driver) {
@@ -28,9 +29,9 @@ public class Screenshoter {
         }
 
         File screenshot = ((TakesScreenshot) driverInstance).getScreenshotAs(OutputType.FILE);
-        String screenshotName = "scr_" + System.nanoTime() + ".png";
-        boolean saved = FileUtils.saveFile(screenshot, screenshotName);
+        String screenshotName = String.format(SCREENSHOT_FILE, System.nanoTime());
+        String filePath = FileUtils.saveFile(screenshot, screenshotName);
 
-        return saved ? screenshotName : null;
+        return filePath != null ? screenshotName : null;
     }
 }

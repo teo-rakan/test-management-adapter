@@ -6,7 +6,10 @@ import com.epam.jira.entity.Parameter;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class JiraInfoProvider {
 
@@ -63,13 +66,10 @@ public class JiraInfoProvider {
         // Get relative path or copy to target
         try {
             String filePath = file.getCanonicalPath();
-            if (!filePath.startsWith(currentDir + FileUtils.getTargetDir())) {
-                targetFilePath = FileUtils.getAttachmentsDir() + file.getName();
-                File copy = new File("." + targetFilePath);
-                org.apache.commons.io.FileUtils.copyFile(file, copy);
-            } else {
-                targetFilePath = filePath.replaceFirst(currentDir, "");
-            }
+            boolean placedOutOfTargetDir = !filePath.startsWith(currentDir + FileUtils.getTargetDir());
+            targetFilePath = placedOutOfTargetDir
+                    ? FileUtils.saveFile(file, file.getName())
+                    : filePath.replaceFirst(currentDir, "");
         } catch (IOException e) {
             e.printStackTrace();
         }

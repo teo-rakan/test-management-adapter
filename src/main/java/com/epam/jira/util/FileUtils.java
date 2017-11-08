@@ -26,13 +26,26 @@ public class FileUtils {
         }
     }
 
-    public static boolean saveFile(File file, String newFilePath) {
+    /**
+     * Copy and save file to the attachments default directory. If file in the
+     * default attachments directory already exists the file will be created in
+     * child directory with name contains current time in nanoseconds.
+     * @param file the file to save
+     * @param newFilePath the path relative to attachments dir
+     * @return the path where file was actually saved
+     */
+    public static String saveFile(File file, String newFilePath) {
         try {
-            File copy = new File("." + ATTACHMENTS_DIR + newFilePath);
+            String relativeFilePath = ATTACHMENTS_DIR;
+            File copy = new File("." + relativeFilePath + newFilePath);
+            if (copy.exists()) {
+                relativeFilePath += System.nanoTime() + "\\";
+                copy = new File("." + relativeFilePath + newFilePath);
+            }
             org.apache.commons.io.FileUtils.copyFile(file, copy);
-            return true;
+            return relativeFilePath + newFilePath;
         } catch (IOException e) {
-            return false;
+            return null;
         }
     }
 
