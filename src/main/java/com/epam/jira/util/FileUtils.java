@@ -29,7 +29,8 @@ public class FileUtils {
     /**
      * Copy and save file to the attachments default directory. If file in the
      * default attachments directory already exists the file will be created in
-     * child directory with name contains current time in nanoseconds.
+     * child directory with name contains current time in nanoseconds using
+     * System::nanoTime possibilities.
      * @param file the file to save
      * @param newFilePath the path relative to attachments dir
      * @return the path where file was actually saved
