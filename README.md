@@ -2,20 +2,20 @@
 
 You could install this artifact on a specific local repository by using maven install-file goal.
 ```bash
-mvn install::install-file -Dfile=test-management-1.5.jar 
+mvn install::install-file -Dfile=test-management-1.6-jar-with-dependencies.jar 
                           -DgroupId=com.epam.jira 
                           -DartifactId=test-management 
-                          -Dversion=1.5 
+                          -Dversion=1.6 
                           -Dpackaging=jar
 ```
-**For copy-paste:** `mvn install::install-file -Dfile=test-management-1.5.jar -DgroupId=com.epam.jira -DartifactId=test-management -Dversion=1.5 -Dpackaging=jar`
+**For copy-paste:** `mvn install::install-file -Dfile=test-management-1.6-jar-with-dependencies.jar -DgroupId=com.epam.jira -DartifactId=test-management -Dversion=1.6 -Dpackaging=jar`
 
 After that you need to add next dependency to your pom-file: 
 ```bash
 <dependency>
     <groupId>com.epam.jira</groupId>
     <artifactId>test-management</artifactId>
-    <version>1.5</version>
+    <version>1.6</version>
 </dependency>
 ```
 
