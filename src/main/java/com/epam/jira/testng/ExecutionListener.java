@@ -15,6 +15,8 @@ import org.testng.TestListenerAdapter;
 import java.lang.annotation.Annotation;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.epam.jira.testng.TestNGUtils.*;
@@ -27,13 +29,30 @@ public class ExecutionListener extends TestListenerAdapter {
     private final Map<String, List<Issue>> failedGroups = new HashMap<>();
     private final List<String> failedConfigs = new ArrayList<>();
 
+    public String save(Throwable throwable) {
+        String message = null;
+        if (throwable != null) {
+            String filePath = String.format(STACK_TRACE_FILE, LocalDateTime.now().toString().replace(":", "-"));
+            FileUtils.writeStackTrace(throwable, filePath);
+            message = "Failed due to: " + throwable.getClass().getName() + ": " + throwable.getMessage()
+                    + ". Full stack trace attached as " + filePath;
+        }
+        return message;
+    }
+
+    public String getAttachmentPath(String message) {
+        Pattern pattern = Pattern.compile("stacktrace.\\d{4}-\\d{2}-\\d{2}T.*");
+        Matcher matcher = pattern.matcher(message);
+        return (matcher.find()) ? FileUtils.getAttachmentsDir() + matcher.group() : null;
+    }
+
     @Override
     public void onConfigurationFailure(ITestResult result) {
         Annotation[] annotations = result.getMethod().getConstructorOrMethod().getMethod().getDeclaredAnnotations();
         String annotationInfo = (annotations != null && annotations.length > 0)
                 ? " annotated with @" + Arrays.stream(annotations).map(a -> a.annotationType().getSimpleName()).collect(Collectors.joining(", @"))
                 : "";
-        failedConfigs.add(TestNGUtils.getFullMethodName(result) + annotationInfo);
+        failedConfigs.add(TestNGUtils.getFullMethodName(result) + annotationInfo + ". " +  save(result.getThrowable()));
     }
 
     @Override
@@ -64,11 +83,8 @@ public class ExecutionListener extends TestListenerAdapter {
             if (throwable instanceof AssertionError) {
                 summary = "Assertion failed: " + throwable.getMessage();
             } else {
-                String filePath = String.format(STACK_TRACE_FILE, LocalDateTime.now().toString().replace(":", "-"));
-                FileUtils.writeStackTrace(throwable, filePath);
-                attachments.add(FileUtils.getAttachmentsDir() + filePath);
-                summary = "Failed due to: " + throwable.getClass().getName() + ": " + throwable.getMessage()
-                        + ". Full stack trace attached as " + filePath;
+                summary = save(result.getThrowable());
+                attachments.add(getAttachmentPath(summary));
             }
 
             // Save screenshot if possible
@@ -121,7 +137,11 @@ public class ExecutionListener extends TestListenerAdapter {
             if (dependencyCounter > 0) {
                 testCase.setSummary(blockReasons.toString());
             } else if (!failedConfigs.isEmpty()){
-                testCase.setSummary("Test method was blocked because of failed config method " + failedConfigs.get(failedConfigs.size() - 1));
+                String message = failedConfigs.get(failedConfigs.size() - 1);
+                List<String> attachments = new ArrayList<>();
+                attachments.add(getAttachmentPath(message));
+                testCase.setSummary("Test method was blocked because of failed config method " + message);
+                testCase.setAttachments(attachments);
             }
             issues.add(testCase);
         }
