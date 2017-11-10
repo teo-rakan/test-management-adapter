@@ -8,8 +8,8 @@ import java.util.*;
 
 public class JiraInfoProvider {
 
-    private static Map<String, List<Parameter>> jiraKeyParametersMapping = new HashMap<>();
-    private static Map<String, List<String>> jiraKeyAttachmentsMapping = new HashMap<>();
+    private static final Map<String, List<Parameter>> jiraKeyParametersMapping = new HashMap<>();
+    private static final Map<String, List<String>> jiraKeyAttachmentsMapping = new HashMap<>();
 
     public static String saveFile(File file) {
         String key = ReflectionUtils.findJiraKeyInCallStack();

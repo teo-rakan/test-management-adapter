@@ -12,20 +12,29 @@ import org.testng.ITestNGMethod;
 import org.testng.ITestResult;
 import org.testng.TestListenerAdapter;
 
+import java.lang.annotation.Annotation;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.epam.jira.testng.TestNGUtils.getTestClassName;
-import static com.epam.jira.testng.TestNGUtils.getTestGroupsDependencies;
-import static com.epam.jira.testng.TestNGUtils.getTestMethodDependencies;
+import static com.epam.jira.testng.TestNGUtils.*;
 
 public class ExecutionListener extends TestListenerAdapter {
 
     private final String STACK_TRACE_FILE = "stacktrace_%s.txt";
-    private List<Issue> issues = new ArrayList<>();
-    private Map<String, Issue> failedMethods = new HashMap<>();
-    private Map<String, List<Issue>> failedGroups = new HashMap<>();
+    private final List<Issue> issues = new ArrayList<>();
+    private final Map<String, Issue> failedMethods = new HashMap<>();
+    private final Map<String, List<Issue>> failedGroups = new HashMap<>();
+    private final List<String> failedConfigs = new ArrayList<>();
+
+    @Override
+    public void onConfigurationFailure(ITestResult result) {
+        Annotation[] annotations = result.getMethod().getConstructorOrMethod().getMethod().getDeclaredAnnotations();
+        String annotationInfo = (annotations != null && annotations.length > 0)
+                ? " annotated with @" + Arrays.stream(annotations).map(a -> a.annotationType().getSimpleName()).collect(Collectors.joining(", @"))
+                : "";
+        failedConfigs.add(TestNGUtils.getFullMethodName(result) + annotationInfo);
+    }
 
     @Override
     public void onTestSuccess(ITestResult result) {
@@ -55,7 +64,7 @@ public class ExecutionListener extends TestListenerAdapter {
             if (throwable instanceof AssertionError) {
                 summary = "Assertion failed: " + throwable.getMessage();
             } else {
-                String filePath = String.format(STACK_TRACE_FILE, LocalDateTime.now().toString().replace(":","-"));
+                String filePath = String.format(STACK_TRACE_FILE, LocalDateTime.now().toString().replace(":", "-"));
                 FileUtils.writeStackTrace(throwable, filePath);
                 attachments.add(FileUtils.getAttachmentsDir() + filePath);
                 summary = "Failed due to: " + throwable.getClass().getName() + ": " + throwable.getMessage()
@@ -78,7 +87,7 @@ public class ExecutionListener extends TestListenerAdapter {
     }
 
     private void saveMethodAndGroupsInFailed(ITestResult result, Issue issue) {
-        String [] groups = TestNGUtils.getMethodGroups(result);
+        String[] groups = TestNGUtils.getMethodGroups(result);
         String methodName = TestNGUtils.getFullMethodName(result);
 
         failedMethods.put(methodName, issue);
@@ -107,16 +116,20 @@ public class ExecutionListener extends TestListenerAdapter {
             blockReasons.append("Test method ").append(methodName).append(" (").append(testCase.getIssueKey())
                     .append(") depends on");
             dependencyCounter = addMethodDependencies(dependencyCounter, blockReasons, result);
-            addGroupDependencies(dependencyCounter, blockReasons, result);
+            dependencyCounter = addGroupDependencies(dependencyCounter, blockReasons, result);
 
-            testCase.setSummary(blockReasons.toString());
+            if (dependencyCounter > 0) {
+                testCase.setSummary(blockReasons.toString());
+            } else if (!failedConfigs.isEmpty()){
+                testCase.setSummary("Test method was blocked because of failed config method " + failedConfigs.get(failedConfigs.size() - 1));
+            }
             issues.add(testCase);
         }
     }
 
     //todo move
     private int addMethodDependencies(int dependencyCounter, StringBuilder builder, ITestResult result) {
-        String [] methods = getTestMethodDependencies(result);
+        String[] methods = getTestMethodDependencies(result);
         String testClassName = getTestClassName(result);
         for (String method : methods) {
             String fullMethodName = testClassName + "." + method;
@@ -131,7 +144,7 @@ public class ExecutionListener extends TestListenerAdapter {
     }
 
     private int addGroupDependencies(int dependencyCounter, StringBuilder builder, ITestResult result) {
-        String [] groups = getTestGroupsDependencies(result);
+        String[] groups = getTestGroupsDependencies(result);
         for (String group : groups) {
             if (failedGroups.containsKey(group)) {
                 if (dependencyCounter++ > 0) builder.append(",");
@@ -139,7 +152,7 @@ public class ExecutionListener extends TestListenerAdapter {
                 List<Issue> groupTestCases = failedGroups.get(group);
                 if (groupTestCases != null && !groupTestCases.isEmpty())
                     builder.append(" with next failed cases: (")
-                           .append(groupTestCases.stream().map(tc -> tc.getIssueKey()).collect(Collectors.joining(", ")))
+                            .append(groupTestCases.stream().map(Issue::getIssueKey).collect(Collectors.joining(", ")))
                             .append(")");
             }
         }
@@ -149,14 +162,14 @@ public class ExecutionListener extends TestListenerAdapter {
     @Override
     public void onFinish(ITestContext context) {
         super.onFinish(context);
-        for(ITestNGMethod method : context.getExcludedMethods()) {
+        for (ITestNGMethod method : context.getExcludedMethods()) {
             String key = TestNGUtils.getTestJIRATestKey(method);
             if (key != null) {
                 issues.add(new Issue(key, TestResult.UNTESTED));
             }
         }
 
-        for(Issue issue : issues) {
+        for (Issue issue : issues) {
             List<String> attachments = JiraInfoProvider.getIssueAttachments(issue.getIssueKey());
             List<Parameter> parameters = JiraInfoProvider.getIssueParameters(issue.getIssueKey());
             if (attachments != null) {
@@ -173,8 +186,6 @@ public class ExecutionListener extends TestListenerAdapter {
         if (!issues.isEmpty())
             FileUtils.writeXml(new Issues(issues), "tm-testng.xml");
     }
-
-
 
 
 }

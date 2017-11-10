@@ -8,30 +8,29 @@ import javassist.NotFoundException;
 
 import java.util.Arrays;
 
-public class ReflectionUtils {
+class ReflectionUtils {
 
     private static CtMethod findMethod(String className, String methodName, int line) throws NotFoundException {
-        ClassPool pool = ClassPool.getDefault();
-        CtClass cc = pool.get(className);
-        CtMethod[] methods = cc.getDeclaredMethods();
+        CtClass clazz = ClassPool.getDefault().get(className);
+        CtMethod[] methods = clazz.getDeclaredMethods();
 
         return Arrays.stream(methods)
                 .filter(method -> method.getName().equals(methodName) && (method.getMethodInfo().getLineNumber(0) <= line))
-                .sorted((m1, m2) -> - Integer.compare(m1.getMethodInfo().getLineNumber(0),m2.getMethodInfo().getLineNumber(0))).findFirst().orElse(null);
+                .sorted((m1, m2) -> Integer.compare(m2.getMethodInfo().getLineNumber(0), m1.getMethodInfo().getLineNumber(0)))
+                .findFirst().orElse(null);
     }
 
-    private static String findJiraKeyInCallStack(String className, String methodName, int line) throws NotFoundException {
-        CtMethod method = findMethod(className, methodName, line);
+    private static String findJiraKeyInCallStack(String className, String methodName, int line)  {
         try {
-            JIRATestKey jiraAnnotation = (JIRATestKey) method.getAnnotation(JIRATestKey.class);
-            if (jiraAnnotation != null)
-                return jiraAnnotation.key();
-        } catch (ClassNotFoundException e) {
+            CtMethod method = findMethod(className, methodName, line);
+            Object jiraAnnotation = method.getAnnotation(JIRATestKey.class);
+            if (jiraAnnotation != null) return ((JIRATestKey) jiraAnnotation).key();
+        } catch (ClassNotFoundException | NotFoundException ignored) {
         }
         return null;
     }
 
-    private static String findJiraKeyInCallStack(StackTraceElement[] trace, int depth) throws NotFoundException {
+    private static String findJiraKeyInCallStack(StackTraceElement[] trace, int depth)  {
         if (trace.length <= depth) return null;
 
         StackTraceElement traceElement = trace[depth];
@@ -42,18 +41,11 @@ public class ReflectionUtils {
         if (methodName.equals("invoke0")) return null;
 
         String key = findJiraKeyInCallStack(className, methodName, line);
-        if (key != null) return key;
-
-        return findJiraKeyInCallStack(trace, depth + 1);
+        return key != null ? key : findJiraKeyInCallStack(trace, depth + 1);
     }
 
-    public static String findJiraKeyInCallStack()  {
+    public static String findJiraKeyInCallStack() {
         StackTraceElement[] trace = new Exception().getStackTrace();
-        String key = null;
-        try {
-            key = findJiraKeyInCallStack(trace, 0);
-        } catch (NotFoundException ignored) {
-        }
-        return key;
+        return findJiraKeyInCallStack(trace, 0);
     }
 }

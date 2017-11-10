@@ -7,7 +7,7 @@ public enum TestResult {
     BLOCKED("Blocked"),
     UNTESTED("Untested");
 
-    private String text;
+    private final String text;
 
     TestResult(final String text) {
         this.text = text;

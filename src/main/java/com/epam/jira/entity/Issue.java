@@ -41,15 +41,6 @@ public class Issue {
     public Issue() {
     }
 
-    public Issue(String issueKey, String status, String summary, String time, List<String> attachments, List<Parameter> parameters) {
-        this.issueKey = issueKey;
-        this.status = status;
-        this.summary = summary;
-        this.time = time;
-        this.attachments = attachments;
-        this.parameters = parameters;
-    }
-
     public String getIssueKey() {
         return issueKey;
     }
