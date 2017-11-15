@@ -32,7 +32,7 @@ After that you need to add next dependency to your pom-file:
 </dependency>
 ```
 
-## ExecutionListener
+## Execution Listener
 Add `ExecutionListener` to your TestNG listeners by one of the following methods:
 
 ### Using _maven-surefire-plugin_ in your _pom.xml_
@@ -115,6 +115,35 @@ You can store useful informatian such as string values (with titles) or files us
 ```bash
     JiraInfoProvider.saveFile(new File("path_to_file"));
     JiraInfoProvider.saveValue("Title", "Some value");
+```
+
+## Retry failed tests
+
+You can rerun your failed tests if needed. You can do that by one of the following methods:
+
+### Add _AnnotationTransformer_ to your TestNG Listeners
+
+You can do it in the same way as [Execution Listener](#execution-listener)   :warning: except **@Listeners** annotation
+
+### Using @Test annotation retryAnalyzer property
+
+```bash
+    @JIRATestKey(key = "EPMFARMATS-1010")
+    @Test(retryAnalyzer = RetryAnalyzer.class)
+    public void testSomething() {
+        ...
+    }
+```
+
+If you want to rerun your test several times, you will need to use **@RetryCountIfFailed** annotation. The count of reruns will be desplayed in your Test report summary field.
+
+```bash
+    @JIRATestKey(key = "EPMFARMATS-1010")
+    @RetryCountIfFailed(2)
+    @Test(retryAnalyzer = RetryAnalyzer.class)
+    public void testSomething() {
+        ...
+    }
 ```
 
 ## @JIRATestKey
