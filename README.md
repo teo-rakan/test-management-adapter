@@ -1,28 +1,41 @@
 # Test Management Adapter
 
-You could install this artifact on a specific local repository by using maven install-file goal.
+This dependency gathers basic build information and useful artifacts (titled values, user defined files, screenshoots, stack traces) for further processing by Jenkins Test Management plugin.
+
+## How it works
+
+The key thing is that this adapter are working in tandem with Jenkins Test Management plugin which processes gathered information and updates Jira issues via REST API.
+
+![Scheme](https://github.com/teo-rakan/test-management-adapter/blob/master/images/readme_scheme.jpg)
+
+## Installation
+
+At this time, Test Management adapter installation is possible only in **local** repository. Unfortunately, the adapter has not yet been placed into the Maven Central Repository.
+
+### Using the command line
+
 ```bash
-mvn install::install-file -Dfile=test-management-1.6-jar-with-dependencies.jar 
+mvn install::install-file -Dfile=test-management-adapter-1.7-jar-with-dependencies.jar 
                           -DgroupId=com.epam.jira 
-                          -DartifactId=test-management 
-                          -Dversion=1.6 
+                          -DartifactId=test-management-adapter 
+                          -Dversion=1.7
                           -Dpackaging=jar
 ```
-**For copy-paste:** `mvn install::install-file -Dfile=test-management-1.6-jar-with-dependencies.jar -DgroupId=com.epam.jira -DartifactId=test-management -Dversion=1.6 -Dpackaging=jar`
+**For copy-paste:** `mvn install::install-file -Dfile=test-management-adapter-1.7-jar-with-dependencies.jar -DgroupId=com.epam.jira -DartifactId=test-management-adapter -Dversion=1.7 -Dpackaging=jar`
 
 After that you need to add next dependency to your pom-file: 
 ```bash
 <dependency>
     <groupId>com.epam.jira</groupId>
-    <artifactId>test-management</artifactId>
-    <version>1.6</version>
+    <artifactId>test-management-adapter</artifactId>
+    <version>1.7</version>
 </dependency>
 ```
 
 ## ExecutionListener
-Add `ExecutionListener` to your TestNG listeners. 
+Add `ExecutionListener` to your TestNG listeners by one of the following methods:
 
-* Using **maven-surefire-plugin** in your *pom.xml*
+### Using _maven-surefire-plugin_ in your _pom.xml_
 
 ```bash
   <build>
@@ -48,15 +61,17 @@ Add `ExecutionListener` to your TestNG listeners.
   </build>
 ```
 
-Also there are several other ways of doing this:
-* Using **@Listeners** annotation at class level
+### Using _@Listeners_ annotation at class level
+
 ```bash
   @Listeners({com.epam.jira.testng.ExecutionListener.class})
   public class TestClass {
       // ...
   }
 ```
-* Using **listeners** element in *testng.xml*
+
+### Using _listeners_ element in _testng.xml_
+
 ```bash
   <?xml version="1.0" encoding="UTF-8"?>
   <suite name="Suite" parallel="false">
@@ -70,7 +85,9 @@ Also there are several other ways of doing this:
 	  </test>
   </suite>
 ```
-* Adding listeners through TestNG **addListener()** API
+
+### Adding listeners through TestNG _addListener()_ API
+
 ```bash
   public static void main(String[] args) {
     TestNG testNG = new TestNG();
@@ -81,7 +98,9 @@ Also there are several other ways of doing this:
 ```
 
 ## Screenshots
-You should initialize Screenshoter class with WebDriver instance in order to attach screenshots to JIRA issue in the fail cases.
+
+You will need to initialize Screenshoter class with WebDriver instance in order to attach screenshots to JIRA issue in the fail cases.
+
 ```bash
     @BeforeClass
     public void initialize() {
@@ -90,21 +109,23 @@ You should initialize Screenshoter class with WebDriver instance in order to att
 ```
 
 ## Store information
-You can store useful informatian such as string values (with title) or files using JiraInfoProvider class.
+
+You can store useful informatian such as string values (with titles) or files using **JiraInfoProvider** class.
+
 ```bash
     JiraInfoProvider.saveFile(new File("path_to_file"));
     JiraInfoProvider.saveValue("Title", "Some value");
 ```
 
 ## @JIRATestKey
-Mark tests with `@JIRATestKey` tag.
+Mark tests with **@JIRATestKey** annotation and specify corresponding issue key as its **key** parameter value.
 
 ```bash
   @Test
-  @JIRATestKey(key = "TEST-08")
+  @JIRATestKey(key = "EPMFARMATS-1010")
   public void testSomething() {
     Assert.assertTrue(true);
   }
 ```
 
-After running the `tm-testng.xml` results file will be created in your project `target` directory.
+After running the `tm-testng.xml` results file with attachments will be created in your project `target` directory.
