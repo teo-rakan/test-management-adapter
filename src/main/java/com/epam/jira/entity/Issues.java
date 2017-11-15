@@ -28,8 +28,4 @@ public class Issues {
         this.issues = issues;
     }
 
-    @Override
-    public String toString() {
-        return "Issues{" + "issues=" + issues + '}';
-    }
 }

@@ -36,8 +36,4 @@ public class Parameter {
         this.value = value;
     }
 
-    @Override
-    public String toString() {
-        return "Parameter{" + "title='" + title + '\'' + ", value='" + value + '\'' + '}';
-    }
 }

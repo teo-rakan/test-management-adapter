@@ -8,11 +8,20 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.io.*;
 
+
+/**
+ * FileUtils is a util class which provides useful methods for file writing.
+ */
 public class FileUtils {
 
     private final static String TARGET_DIR = "\\target\\";
     private final static String ATTACHMENTS_DIR = TARGET_DIR + "attachments\\";
 
+    /**
+     * Writes stack trace in temporary file and save it to attachments directory
+     * @param throwable The exception for getting stacktrace
+     * @param filePath The path for output file
+     */
     public static void writeStackTrace(Throwable throwable, String filePath) {
         try {
             File temp = File.createTempFile("stacktrace", ".tmp");
@@ -50,6 +59,12 @@ public class FileUtils {
         }
     }
 
+    /**
+     * Parse xml file using JAXB possibilities. The entities for marshaling are the same as in
+     * Test Management Jira plugin.
+     * @param issues the list of issues for writing
+     * @param filePath the path to output file
+     */
     public static void writeXml(Issues issues, String filePath) {
         try {
             JAXBContext jaxbCtx = JAXBContext.newInstance(Issues.class);
@@ -61,7 +76,7 @@ public class FileUtils {
         }
     }
 
-    public static String getTargetDir() {
+    static String getTargetDir() {
         return TARGET_DIR;
     }
 

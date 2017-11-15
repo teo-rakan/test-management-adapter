@@ -1,27 +1,46 @@
 package com.epam.jira.util;
 
+import com.epam.jira.JIRATestKey;
 import com.epam.jira.entity.Parameter;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+
+/**
+ * JiraInfoProvider is a class responsible for gathering the issue artifacts information.
+ * Basically the way it works is that we can find Jira Key in the method call stack using
+ * ReflectionUtils and map it to some information (titled values or user files). This
+ * mapped information would be requested by ExecutionListener during the result xml file
+ * writing in order to add it to file for further Jenkins plugin processing.
+ *
+ * @author Alena_Zubrevich
+ */
 public class JiraInfoProvider {
 
     private static final Map<String, List<Parameter>> jiraKeyParametersMapping = new HashMap<>();
     private static final Map<String, List<String>> jiraKeyAttachmentsMapping = new HashMap<>();
 
-    public static String saveFile(File file) {
-        String key = ReflectionUtils.findJiraKeyInCallStack();
+    private static String findJiraTestKey() {
+        Object jiraTestKeyObj = ReflectionUtils.findAnnotationInCallStack(JIRATestKey.class);
+        if (jiraTestKeyObj != null && jiraTestKeyObj instanceof JIRATestKey) {
+            return ((JIRATestKey) jiraTestKeyObj).key();
+        }
+        return null;
+    }
 
-        if (key == null) return null;
-        if (!file.exists() || !file.isFile()) return null;
+    public static void saveFile(File file) {
+        String key = findJiraTestKey();
+
+        if (key == null) return;
+        if (!file.exists() || !file.isFile()) return;
 
         // Copy to target if it's real file
         String currentDir = System.getProperty("user.dir");
         String targetFilePath = null;
 
-        // Get relative path or copy to target
+        // Get relative file path if file placed in target directory or copy it there
         try {
             String filePath = file.getCanonicalPath();
             boolean placedOutOfTargetDir = !filePath.startsWith(currentDir + FileUtils.getTargetDir());
@@ -32,7 +51,7 @@ public class JiraInfoProvider {
             e.printStackTrace();
         }
 
-        //Map file path
+        //Map issue key to file path
         if (jiraKeyAttachmentsMapping.containsKey(key)) {
             jiraKeyAttachmentsMapping.get(key).add(targetFilePath);
         } else {
@@ -40,12 +59,10 @@ public class JiraInfoProvider {
             files.add(targetFilePath);
             jiraKeyAttachmentsMapping.put(key, files);
         }
-
-        return targetFilePath;
     }
 
     public static void saveValue(String title, String value) {
-        String key = ReflectionUtils.findJiraKeyInCallStack();
+        String key = findJiraTestKey();
 
         if (key != null) {
             Parameter parameter = new Parameter(title, value);

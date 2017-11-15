@@ -23,24 +23,23 @@ import static com.epam.jira.testng.TestNGUtils.*;
 
 public class ExecutionListener extends TestListenerAdapter {
 
-    private final String STACK_TRACE_FILE = "stacktrace_%s.txt";
     private final List<Issue> issues = new ArrayList<>();
     private final Map<String, Issue> failedMethods = new HashMap<>();
     private final Map<String, List<Issue>> failedGroups = new HashMap<>();
     private final List<String> failedConfigs = new ArrayList<>();
 
-    public String save(Throwable throwable) {
+    private String save(Throwable throwable) {
         String message = null;
         if (throwable != null) {
-            String filePath = String.format(STACK_TRACE_FILE, LocalDateTime.now().toString().replace(":", "-"));
+            String filePath = String.format("stacktrace_%s.txt", LocalDateTime.now().toString().replace(":", "-"));
             FileUtils.writeStackTrace(throwable, filePath);
             message = "Failed due to: " + throwable.getClass().getName() + ": " + throwable.getMessage()
-                    + ". Full stack trace attached as " + filePath;
+                    + "." + System.lineSeparator() + " Full stack trace attached as " + filePath;
         }
         return message;
     }
 
-    public String getAttachmentPath(String message) {
+    private String getAttachmentPath(String message) {
         Pattern pattern = Pattern.compile("stacktrace.\\d{4}-\\d{2}-\\d{2}T.*");
         Matcher matcher = pattern.matcher(message);
         return (matcher.find()) ? FileUtils.getAttachmentsDir() + matcher.group() : null;
@@ -52,7 +51,9 @@ public class ExecutionListener extends TestListenerAdapter {
         String annotationInfo = (annotations != null && annotations.length > 0)
                 ? " annotated with @" + Arrays.stream(annotations).map(a -> a.annotationType().getSimpleName()).collect(Collectors.joining(", @"))
                 : "";
-        failedConfigs.add(TestNGUtils.getFullMethodName(result) + annotationInfo + ". " +  save(result.getThrowable()));
+        String failureExplanation = TestNGUtils.getFullMethodName(result) + annotationInfo + "."
+                + System.lineSeparator() + save(result.getThrowable());
+        failedConfigs.add(failureExplanation);
     }
 
     @Override

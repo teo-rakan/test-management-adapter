@@ -1,6 +1,5 @@
 package com.epam.jira.util;
 
-import com.epam.jira.JIRATestKey;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
@@ -8,6 +7,19 @@ import javassist.NotFoundException;
 
 import java.util.Arrays;
 
+
+/**
+ * ReflectionUtils is a util class responsible for finding Jira issue key in the method call
+ * stack. The first thing we have to do is to get Stack Trace information using new exception
+ * creating. After that, we sequentially check methods for JiraTestKey annotation. The only
+ * catch is that we have information only about class name, method name and call line. But
+ * that's not enough for getting method as Reflection API object because of the lack of method
+ * parameters information. So we have to get all class methods with defined name and theirs
+ * start line numbers using Javassist possibilities. After that we can determine exactly
+ * what method was called.
+ *
+ * @author Alena_Zubrevich
+ */
 class ReflectionUtils {
 
     private static CtMethod findMethod(String className, String methodName, int line) throws NotFoundException {
@@ -20,17 +32,17 @@ class ReflectionUtils {
                 .findFirst().orElse(null);
     }
 
-    private static String findJiraKeyInCallStack(String className, String methodName, int line)  {
+    private static Object findAnnotationInCallStack(Class annotationClass, String className, String methodName, int line)  {
         try {
             CtMethod method = findMethod(className, methodName, line);
-            Object jiraAnnotation = method.getAnnotation(JIRATestKey.class);
-            if (jiraAnnotation != null) return ((JIRATestKey) jiraAnnotation).key();
+            Object annotation = method.getAnnotation(annotationClass);
+            if (annotation != null) return annotation;
         } catch (ClassNotFoundException | NotFoundException ignored) {
         }
         return null;
     }
 
-    private static String findJiraKeyInCallStack(StackTraceElement[] trace, int depth)  {
+    private static Object findAnnotationInCallStack(Class annotationClass, StackTraceElement[] trace, int depth)  {
         if (trace.length <= depth) return null;
 
         StackTraceElement traceElement = trace[depth];
@@ -40,12 +52,12 @@ class ReflectionUtils {
 
         if (methodName.equals("invoke0")) return null;
 
-        String key = findJiraKeyInCallStack(className, methodName, line);
-        return key != null ? key : findJiraKeyInCallStack(trace, depth + 1);
+        Object annotation = findAnnotationInCallStack(annotationClass, className, methodName, line);
+        return annotation != null ? annotation : findAnnotationInCallStack(annotationClass, trace, depth + 1);
     }
 
-    public static String findJiraKeyInCallStack() {
+    static Object findAnnotationInCallStack(Class annotationClass) {
         StackTraceElement[] trace = new Exception().getStackTrace();
-        return findJiraKeyInCallStack(trace, 0);
+        return findAnnotationInCallStack(annotationClass, trace, 2);
     }
 }
