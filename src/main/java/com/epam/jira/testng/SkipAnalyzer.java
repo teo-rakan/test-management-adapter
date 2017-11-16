@@ -43,7 +43,7 @@ class SkipAnalyzer {
     }
 
 
-    String getReasonIfHaveDependencies (ITestResult result) {
+    String getReasonIfHaveDependencies(ITestResult result) {
         Method method = result.getMethod().getConstructorOrMethod().getMethod();
         StringBuilder blockReasons = new StringBuilder();
         String className = method.getDeclaringClass().getName();
@@ -73,7 +73,7 @@ class SkipAnalyzer {
     }
 
     private int addGroupDependencies(int dependencyCounter, StringBuilder builder, Method testMethod) {
-        String[] groups =  TestNGUtils.getTestGroupsDependencies(testMethod);
+        String[] groups = TestNGUtils.getTestGroupsDependencies(testMethod);
         for (String group : groups) {
             if (failedGroups.containsKey(group)) {
                 if (dependencyCounter++ > 0) builder.append(",");
@@ -88,9 +88,9 @@ class SkipAnalyzer {
         return dependencyCounter;
     }
 
-    private String annotationsToString(Annotation [] annotations) {
+    private String annotationsToString(Annotation[] annotations) {
         if (annotations == null || annotations.length == 0) return "";
         return Arrays.stream(annotations).map(a -> a.annotationType().getSimpleName()).collect(
-                        Collectors.joining(", @", "annotated with @", ""));
+                Collectors.joining(", @", " annotated with @", ""));
     }
 }

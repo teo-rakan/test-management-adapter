@@ -11,11 +11,11 @@ public class RetryAnalyzer implements IRetryAnalyzer {
     private int counter = 0;
     private final int MAX_DEFAULT_ATTEMPTS = 1;
 
-    public boolean wasRerun() {
+    boolean wasRerun() {
         return counter > 0;
     }
 
-    public int getRerunAttempts() {
+    int getRerunAttempts() {
         return counter;
     }
 

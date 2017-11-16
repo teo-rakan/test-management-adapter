@@ -7,5 +7,5 @@ import java.lang.annotation.*;
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RetryCountIfFailed {
-    int value() default 0;
+    int value() default 1;
 }
