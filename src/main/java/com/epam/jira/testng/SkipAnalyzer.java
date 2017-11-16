@@ -1,32 +1,63 @@
 package com.epam.jira.testng;
 
 import com.epam.jira.entity.Issue;
+import com.epam.jira.util.FileUtils;
+import org.testng.ITestResult;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Created by Alena_Zubrevich on 11/15/2017.
- */
-public class SkipAnalyzer {
+
+class SkipAnalyzer {
+    private final Map<String, Issue> failedMethods = new HashMap<>();
+    private final Map<String, List<Issue>> failedGroups = new HashMap<>();
+    private final List<String> failedConfigs = new ArrayList<>();
+
+    void addFailedConfig(ITestResult result) {
+        Annotation[] annotations = result.getMethod().getConstructorOrMethod().getMethod().getDeclaredAnnotations();
+        String annotationInfo = annotationsToString(annotations);
+        failedConfigs.add(TestNGUtils.getFullMethodName(result) + annotationInfo + ".\n" + FileUtils.save(result.getThrowable()));
+    }
+
+    void addFailedResult(ITestResult result, Issue issue) {
+        String[] groups = TestNGUtils.getMethodGroups(result);
+        String methodName = TestNGUtils.getFullMethodName(result);
+
+        failedMethods.put(methodName, issue);
+        for (String group : groups) {
+            List<Issue> issues = failedGroups.get(group);
+            if (issues != null) {
+                issues.add(issue);
+            } else {
+                List<Issue> failedIssues = new ArrayList<>();
+                failedIssues.add(issue);
+                failedGroups.put(group, failedIssues);
+            }
+        }
+    }
+
+    String getLastFailedConfig() {
+        return failedConfigs.isEmpty() ? null : failedConfigs.get(failedConfigs.size() - 1);
+    }
 
 
-    public String getReasonIfHaveDependencies (Method testMethod, Map<String, Issue> failedMethods, Map<String, List<Issue>> failedGroups) {
+    String getReasonIfHaveDependencies (ITestResult result) {
+        Method method = result.getMethod().getConstructorOrMethod().getMethod();
         StringBuilder blockReasons = new StringBuilder();
-        String className = testMethod.getDeclaringClass().getName();
-        String methodName = className + "." + testMethod.getName();
+        String className = method.getDeclaringClass().getName();
+        String methodName = className + "." + method.getName();
         Integer dependencyCounter = 0;
 
         blockReasons.append("Test method ").append(methodName).append(" (%s) depends on");
-        dependencyCounter = addMethodDependencies(failedMethods, dependencyCounter, blockReasons, testMethod);
-        dependencyCounter = addGroupDependencies(failedGroups, dependencyCounter, blockReasons, testMethod);
+        dependencyCounter = addMethodDependencies(dependencyCounter, blockReasons, method);
+        dependencyCounter = addGroupDependencies(dependencyCounter, blockReasons, method);
 
         return (dependencyCounter > 0) ? blockReasons.toString() : null;
     }
 
-    private int addMethodDependencies(Map<String, Issue> failedMethods, int dependencyCounter, StringBuilder builder, Method testMethod) {
+    private int addMethodDependencies(int dependencyCounter, StringBuilder builder, Method testMethod) {
         String[] methods = TestNGUtils.getTestMethodDependencies(testMethod);
         String testClassName = testMethod.getDeclaringClass().getName();
         for (String method : methods) {
@@ -41,7 +72,7 @@ public class SkipAnalyzer {
         return dependencyCounter;
     }
 
-    private int addGroupDependencies(Map<String, List<Issue>> failedGroups, int dependencyCounter, StringBuilder builder, Method testMethod) {
+    private int addGroupDependencies(int dependencyCounter, StringBuilder builder, Method testMethod) {
         String[] groups =  TestNGUtils.getTestGroupsDependencies(testMethod);
         for (String group : groups) {
             if (failedGroups.containsKey(group)) {
@@ -55,5 +86,11 @@ public class SkipAnalyzer {
             }
         }
         return dependencyCounter;
+    }
+
+    private String annotationsToString(Annotation [] annotations) {
+        if (annotations == null || annotations.length == 0) return "";
+        return Arrays.stream(annotations).map(a -> a.annotationType().getSimpleName()).collect(
+                        Collectors.joining(", @", "annotated with @", ""));
     }
 }

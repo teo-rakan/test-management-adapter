@@ -9,26 +9,19 @@ import com.epam.jira.util.JiraInfoProvider;
 import com.epam.jira.util.Screenshoter;
 import org.testng.*;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+
 
 public class ExecutionListener extends TestListenerAdapter {
 
     private final List<Issue> issues = new ArrayList<>();
-    private final Map<String, Issue> failedMethods = new HashMap<>();
-    private final Map<String, List<Issue>> failedGroups = new HashMap<>();
-    private final List<String> failedConfigs = new ArrayList<>();
+    private final SkipAnalyzer skipAnalyzer = new SkipAnalyzer();
 
     @Override
     public void onConfigurationFailure(ITestResult result) {
-        Annotation[] annotations = result.getMethod().getConstructorOrMethod().getMethod().getDeclaredAnnotations();
-        String annotationInfo = annotationsToString(annotations);
-        failedConfigs.add(TestNGUtils.getFullMethodName(result) + annotationInfo + ".\n" + save(result.getThrowable()));
+        skipAnalyzer.addFailedConfig(result);
     }
 
     @Override
@@ -65,7 +58,7 @@ public class ExecutionListener extends TestListenerAdapter {
             if (throwable instanceof AssertionError) {
                 summary = "Assertion failed: " + throwable.getMessage();
             } else {
-                summary = save(result.getThrowable());
+                summary = FileUtils.save(result.getThrowable());
                 attachments.add(getAttachmentPath(summary));
             }
 
@@ -88,7 +81,7 @@ public class ExecutionListener extends TestListenerAdapter {
                 issue.setAttachments(attachments);
             issues.add(issue);
         }
-        saveMethodAndGroupsInFailed(result, issue);
+        skipAnalyzer.addFailedResult(result, issue);
     }
 
     @Override
@@ -105,18 +98,18 @@ public class ExecutionListener extends TestListenerAdapter {
             Issue issue = new Issue(key, TestResult.BLOCKED);
 
             // Check dependencies
-            Method method = result.getMethod().getConstructorOrMethod().getMethod();
-            String dependencies = new SkipAnalyzer().getReasonIfHaveDependencies(method, failedMethods, failedGroups);
+            String dependencies = skipAnalyzer.getReasonIfHaveDependencies(result);
             if (dependencies != null) {
                 issue.setSummary(String.format(dependencies, key));
-            } else if (!failedConfigs.isEmpty()){
-                String message = failedConfigs.get(failedConfigs.size() - 1);
-                List<String> attachments = new ArrayList<>();
-                attachments.add(getAttachmentPath(message));
-                issue.setSummary("Test method was blocked because of failed config method " + message);
-                issue.setAttachments(attachments);
+            } else {
+                String message = skipAnalyzer.getLastFailedConfig();
+                if (message != null){
+                    List<String> attachments = new ArrayList<>();
+                    attachments.add(getAttachmentPath(message));
+                    issue.setSummary("Test method was blocked because of failed config method " + message);
+                    issue.setAttachments(attachments);
+                }
             }
-
             issues.add(issue);
         }
     }
@@ -146,45 +139,9 @@ public class ExecutionListener extends TestListenerAdapter {
 
     // Auxiliary methods
 
-    private String save(Throwable throwable) {
-        String message = null;
-        if (throwable != null) {
-            String filePath = String.format("stacktrace_%s.txt", LocalDateTime.now().toString().replace(":", "-"));
-            FileUtils.writeStackTrace(throwable, filePath);
-            message = "Failed due to: " + throwable.getClass().getName() + ": " + throwable.getMessage()
-                    + ".\nFull stack trace attached as " + filePath;
-        }
-        return message;
-    }
-
     private String getAttachmentPath(String message) {
         Pattern pattern = Pattern.compile("stacktrace.\\d{4}-\\d{2}-\\d{2}T.*");
         Matcher matcher = pattern.matcher(message);
         return (matcher.find()) ? FileUtils.getAttachmentsDir() + matcher.group() : null;
-    }
-
-    private void saveMethodAndGroupsInFailed(ITestResult result, Issue issue) {
-        String[] groups = TestNGUtils.getMethodGroups(result);
-        String methodName = TestNGUtils.getFullMethodName(result);
-
-        failedMethods.put(methodName, issue);
-        for (String group : groups) {
-            List<Issue> issues = failedGroups.get(group);
-            if (issues != null) {
-                issues.add(issue);
-            } else {
-                List<Issue> failedIssues = new ArrayList<>();
-                failedIssues.add(issue);
-                failedGroups.put(group, failedIssues);
-            }
-        }
-    }
-
-    private String annotationsToString(Annotation [] annotations) {
-        String result = "";
-        if (annotations != null && annotations.length > 0)
-            result = "annotated with @" + Arrays.stream(annotations).map(a -> a.annotationType().getSimpleName())
-                    .collect(Collectors.joining(", @"));
-        return result;
     }
 }

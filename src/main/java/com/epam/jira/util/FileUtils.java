@@ -7,6 +7,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.io.*;
+import java.time.LocalDateTime;
 
 
 /**
@@ -17,12 +18,23 @@ public class FileUtils {
     private final static String TARGET_DIR = "\\target\\";
     private final static String ATTACHMENTS_DIR = TARGET_DIR + "attachments\\";
 
+    public static String save(Throwable throwable) {
+        String message = null;
+        if (throwable != null) {
+            String filePath = String.format("stacktrace_%s.txt", LocalDateTime.now().toString().replace(":", "-"));
+            FileUtils.writeStackTrace(throwable, filePath);
+            message = "Failed due to: " + throwable.getClass().getName() + ": " + throwable.getMessage()
+                    + ".\nFull stack trace attached as " + filePath;
+        }
+        return message;
+    }
+
     /**
      * Writes stack trace in temporary file and save it to attachments directory
      * @param throwable The exception for getting stacktrace
      * @param filePath The path for output file
      */
-    public static void writeStackTrace(Throwable throwable, String filePath) {
+    private static void writeStackTrace(Throwable throwable, String filePath) {
         try {
             File temp = File.createTempFile("stacktrace", ".tmp");
             BufferedWriter out = new BufferedWriter(new FileWriter(temp));
