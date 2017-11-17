@@ -27,18 +27,22 @@ class SkipAnalyzer {
 
         failedMethods.put(methodName, issue);
         for (String group : groups) {
-            if (failedGroups.containsKey(group)) {
-                if (issue != null) {
-                    List<Issue> issues = failedGroups.get(group);
-                    if (issues != null) issues.add(issue);
-                }
-            } else {
+            if (!failedGroups.containsKey(group)) {
                 List<Issue> failedIssues = null;
                 if (issue != null) {
                     failedIssues = new ArrayList<>();
                     failedIssues.add(issue);
                 }
                 failedGroups.put(group, failedIssues);
+            } else if (issue != null) {
+                List<Issue> groupFailedIssues = failedGroups.get(group);
+                if (groupFailedIssues != null)
+                    groupFailedIssues.add(issue);
+                else {
+                    groupFailedIssues = new ArrayList<>();
+                    groupFailedIssues.add(issue);
+                    failedGroups.put(group, groupFailedIssues);
+                }
             }
         }
     }
