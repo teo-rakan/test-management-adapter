@@ -1,5 +1,6 @@
 package com.epam.jira.testng;
 
+import com.epam.jira.JIRATestKey;
 import org.testng.IRetryAnalyzer;
 import org.testng.ITestResult;
 
@@ -22,9 +23,12 @@ public class RetryAnalyzer implements IRetryAnalyzer {
     @Override
     public boolean retry(ITestResult result) {
         Method method = result.getMethod().getConstructorOrMethod().getMethod();
-        RetryCountIfFailed annotation = method.getAnnotation(RetryCountIfFailed.class);
+        JIRATestKey annotation = method.getAnnotation(JIRATestKey.class);
+        int maxAttempts = annotation != null && !annotation.disabled()
+                ? annotation.retryCountIfFailed()
+                : MAX_DEFAULT_ATTEMPTS;
 
-        if (counter < (annotation != null ? annotation.value() : MAX_DEFAULT_ATTEMPTS)) {
+        if (counter < maxAttempts) {
             counter++;
             return true;
         }

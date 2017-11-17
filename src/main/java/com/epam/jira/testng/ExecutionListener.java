@@ -21,6 +21,7 @@ public class ExecutionListener extends TestListenerAdapter {
 
     @Override
     public void onConfigurationFailure(ITestResult result) {
+        super.onConfigurationSkip(result);
         skipAnalyzer.addFailedConfig(result);
     }
 

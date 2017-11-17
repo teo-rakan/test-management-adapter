@@ -46,7 +46,7 @@ class TestNGUtils {
     static String getTestJIRATestKey(ITestNGMethod testNGMethod) {
         Method method = testNGMethod.getConstructorOrMethod().getMethod();
         JIRATestKey annotation = method.getAnnotation(JIRATestKey.class);
-        if (annotation != null) {
+        if (annotation != null && !annotation.disabled()) {
             return annotation.key();
         }
         return null;
