@@ -35,7 +35,7 @@ After that you need to add next dependency to your pom-file:
 ## Execution Listener
 Add `ExecutionListener` to your TestNG listeners by one of the following methods:
 
-### Using _maven-surefire-plugin_ in your _pom.xml_
+### Using _maven-surefire-plugin_ in your pom.xml
 
 ```bash
   <build>
@@ -70,7 +70,7 @@ Add `ExecutionListener` to your TestNG listeners by one of the following methods
   }
 ```
 
-### Using _listeners_ element in _testng.xml_
+### Using listeners element in _testng.xml_
 
 ```bash
   <?xml version="1.0" encoding="UTF-8"?>
@@ -136,7 +136,7 @@ You can store useful informatian such as string values (with titles) or files us
 
 You can rerun your failed tests if needed. You can do that by one of the following methods:
 
-### Add _AnnotationTransformer_ to your TestNG Listeners
+### Add AnnotationTransformer to your TestNG Listeners
 
 You can do it in the same way as [Execution Listener](#execution-listener)   :warning: except **@Listeners** annotation
 
