@@ -39,15 +39,20 @@ class TestNGUtils {
         return null;
     }
 
-    static String getTestJIRATestKey(ITestResult result) {
-        return getTestJIRATestKey(result.getMethod());
+    static String getJIRATestKey(ITestResult result) {
+        return getJIRATestKey(result.getMethod());
     }
 
-    static String getTestJIRATestKey(ITestNGMethod testNGMethod) {
+    static String getJIRATestKey(ITestNGMethod testNGMethod) {
+        JIRATestKey annotation = getJIRATestKeyAnnotation(testNGMethod);
+        return annotation != null ? annotation.key() : null;
+    }
+
+    static JIRATestKey getJIRATestKeyAnnotation(ITestNGMethod testNGMethod) {
         Method method = testNGMethod.getConstructorOrMethod().getMethod();
         JIRATestKey annotation = method.getAnnotation(JIRATestKey.class);
         if (annotation != null && !annotation.disabled()) {
-            return annotation.key();
+            return annotation;
         }
         return null;
     }

@@ -1,5 +1,6 @@
 package com.epam.jira.testng;
 
+import com.epam.jira.JIRATestKey;
 import com.epam.jira.entity.Issue;
 import com.epam.jira.entity.Issues;
 import com.epam.jira.entity.Parameter;
@@ -28,7 +29,7 @@ public class ExecutionListener extends TestListenerAdapter {
     @Override
     public void onTestSuccess(ITestResult result) {
         super.onTestSuccess(result);
-        String key = TestNGUtils.getTestJIRATestKey(result);
+        String key = TestNGUtils.getJIRATestKey(result);
         if (key != null) {
             Issue issue = new Issue(key, TestResult.PASSED, TestNGUtils.getTimeAsString(result));
             IRetryAnalyzer analyzer = result.getMethod().getRetryAnalyzer();
@@ -44,15 +45,19 @@ public class ExecutionListener extends TestListenerAdapter {
     public void onTestFailure(ITestResult result) {
         super.onTestFailure(result);
 
-        String key = TestNGUtils.getTestJIRATestKey(result);
+        JIRATestKey annotation = TestNGUtils.getJIRATestKeyAnnotation(result.getMethod());
         Issue issue = null;
         List<String> attachments = new ArrayList<>();
 
-        if (key != null) {
-            String screenshot = Screenshoter.isInitialized() ? Screenshoter.takeScreenshot() : null;
+        if (annotation != null) {
+            String screenshot = null;
             String summary;
 
-            issue = new Issue(key, TestResult.FAILED, TestNGUtils.getTimeAsString(result));
+            if (Screenshoter.isInitialized() && !annotation.disableScreenshotOnFailure()) {
+                screenshot = Screenshoter.takeScreenshot();
+            }
+
+            issue = new Issue(annotation.key(), TestResult.FAILED, TestNGUtils.getTimeAsString(result));
 
             // Save failure message and/or trace
             Throwable throwable = result.getThrowable();
@@ -63,7 +68,7 @@ public class ExecutionListener extends TestListenerAdapter {
                 attachments.add(getAttachmentPath(summary));
             }
 
-            // Save screenshot if possible
+            // Add screenshot path if exist
             if (screenshot != null) {
                 attachments.add(FileUtils.getAttachmentsDir() + screenshot);
                 summary += ".\nScreenshot attached as " + screenshot;
@@ -88,7 +93,7 @@ public class ExecutionListener extends TestListenerAdapter {
     @Override
     public void onTestSkipped(ITestResult result) {
         super.onTestSkipped(result);
-        String key = TestNGUtils.getTestJIRATestKey(result);
+        String key = TestNGUtils.getJIRATestKey(result);
         if (key != null) {
             // Check if retry
             IRetryAnalyzer retryAnalyzer = result.getMethod().getRetryAnalyzer();
@@ -119,7 +124,7 @@ public class ExecutionListener extends TestListenerAdapter {
     public void onFinish(ITestContext context) {
         super.onFinish(context);
         for (ITestNGMethod method : context.getExcludedMethods()) {
-            String key = TestNGUtils.getTestJIRATestKey(method);
+            String key = TestNGUtils.getJIRATestKey(method);
             if (key != null) issues.add(new Issue(key, TestResult.UNTESTED));
         }
 
