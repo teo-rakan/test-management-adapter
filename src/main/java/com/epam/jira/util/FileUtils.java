@@ -22,8 +22,13 @@ public class FileUtils {
         String message = null;
         if (throwable != null) {
             String filePath = String.format("stacktrace_%s.txt", LocalDateTime.now().toString().replace(":", "-"));
+            String exceptionMessage = throwable.getMessage();
+            if (exceptionMessage.contains("\n"))
+                exceptionMessage = exceptionMessage.substring(0, exceptionMessage.indexOf('\n'));
+
+
             FileUtils.writeStackTrace(throwable, filePath);
-            message = "Failed due to: " + throwable.getClass().getName() + ": " + throwable.getMessage()
+            message = "Failed due to: " + throwable.getClass().getName() + ": " + exceptionMessage
                     + ".\nFull stack trace attached as " + filePath;
         }
         return message;

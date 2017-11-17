@@ -2,11 +2,13 @@ package com.epam.jira.util;
 
 import com.epam.jira.JIRATestKey;
 import com.epam.jira.entity.Parameter;
-import org.apache.commons.lang3.ObjectUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -91,6 +93,16 @@ public class JiraInfoProvider {
 
     public static void saveValue(String title, Object value) {
         saveValue(title, value != null ? value.toString() : "null");
+    }
+
+    public static void cleanFor(String issueKey) {
+        if (jiraKeyParametersMapping.containsKey(issueKey)) {
+            jiraKeyParametersMapping.remove(issueKey);
+        }
+        if (jiraKeyAttachmentsMapping.containsKey(issueKey)) {
+            jiraKeyAttachmentsMapping.remove(issueKey);
+        }
+
     }
 
     public static List<String> getIssueAttachments(String key) {
