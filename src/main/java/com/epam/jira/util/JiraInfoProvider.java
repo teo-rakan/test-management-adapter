@@ -66,7 +66,7 @@ public class JiraInfoProvider {
         String key = findJiraTestKey();
 
         if (key != null) {
-            Parameter parameter = new Parameter(title, value != null ? value : null);
+            Parameter parameter = new Parameter(title, value != null ? value : "null");
             if (jiraKeyParametersMapping.containsKey(key)) {
                 jiraKeyParametersMapping.get(key).add(parameter);
             } else {
