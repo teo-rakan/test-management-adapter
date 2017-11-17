@@ -121,7 +121,7 @@ You will need to initialize Screenshoter class with WebDriver instance in order 
     }
 ```
 
-You can disable screenshots for failure using **JiraTestKey** `disableScreenshotOnFailure` option
+You can disable screenshots on failure for a certain test using **JiraTestKey** `disableScreenshotOnFailure` option
 
 ## Store information
 
