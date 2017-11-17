@@ -97,6 +97,19 @@ Add `ExecutionListener` to your TestNG listeners by one of the following methods
   }
 ```
 
+## @JIRATestKey
+Mark tests with **@JIRATestKey** annotation and specify corresponding issue key as its **key** parameter value.
+
+```bash
+  @Test
+  @JIRATestKey(key = "EPMFARMATS-1010")
+  public void testSomething() {
+    Assert.assertTrue(true);
+  }
+```
+
+You can disable this annotation using its `disabled` option
+
 ## Screenshots
 
 You will need to initialize Screenshoter class with WebDriver instance in order to attach screenshots to JIRA issue in the fail cases.
@@ -107,6 +120,8 @@ You will need to initialize Screenshoter class with WebDriver instance in order 
         Screenshoter.initialize(driver);
     }
 ```
+
+You can disable screenshots for failure using **JiraTestKey** `disableScreenshotOnFailure` option
 
 ## Store information
 
@@ -135,26 +150,14 @@ You can do it in the same way as [Execution Listener](#execution-listener)   :wa
     }
 ```
 
-If you want to rerun your test several times, you will need to use **@RetryCountIfFailed** annotation. The count of reruns will be desplayed in your Test report summary field.
+If you want to rerun your test several times, you will need to use **JiraTestKey** `retryCountIfFailed` option (default value is **1**). The count of reruns will be desplayed in your Test report summary field.
 
 ```bash
-    @JIRATestKey(key = "EPMFARMATS-1010")
-    @RetryCountIfFailed(2)
+    @JIRATestKey(key = "EPMFARMATS-1010", retryCountIfFailed = 2)
     @Test(retryAnalyzer = RetryAnalyzer.class)
     public void testSomething() {
         ...
     }
-```
-
-## @JIRATestKey
-Mark tests with **@JIRATestKey** annotation and specify corresponding issue key as its **key** parameter value.
-
-```bash
-  @Test
-  @JIRATestKey(key = "EPMFARMATS-1010")
-  public void testSomething() {
-    Assert.assertTrue(true);
-  }
 ```
 
 After running the `tm-testng.xml` results file with attachments will be created in your project `target` directory.
