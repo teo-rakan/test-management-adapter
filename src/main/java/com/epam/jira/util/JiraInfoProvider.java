@@ -2,6 +2,7 @@ package com.epam.jira.util;
 
 import com.epam.jira.JIRATestKey;
 import com.epam.jira.entity.Parameter;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,7 +66,7 @@ public class JiraInfoProvider {
         String key = findJiraTestKey();
 
         if (key != null) {
-            Parameter parameter = new Parameter(title, value);
+            Parameter parameter = new Parameter(title, value != null ? value : null);
             if (jiraKeyParametersMapping.containsKey(key)) {
                 jiraKeyParametersMapping.get(key).add(parameter);
             } else {
@@ -74,6 +75,22 @@ public class JiraInfoProvider {
                 jiraKeyParametersMapping.put(key, params);
             }
         }
+    }
+
+    public static void saveValue(String title, int value) {
+        saveValue(title, String.valueOf(value));
+    }
+
+    public static void saveValue(String title, boolean value) {
+        saveValue(title, String.valueOf(value));
+    }
+
+    public static void saveValue(String title, double value) {
+        saveValue(title, String.valueOf(value));
+    }
+
+    public static void saveValue(String title, Object value) {
+        saveValue(title, value != null ? value.toString() : "null");
     }
 
     public static List<String> getIssueAttachments(String key) {
