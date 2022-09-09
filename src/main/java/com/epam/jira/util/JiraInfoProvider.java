@@ -46,7 +46,7 @@ public class JiraInfoProvider {
         // Get relative file path if file placed in target directory or copy it there
         try {
             String filePath = file.getCanonicalPath();
-            boolean placedOutOfTargetDir = !filePath.startsWith(currentDir + FileUtils.getTargetDir());
+            boolean placedOutOfTargetDir = !file.getCanonicalFile().toPath().startsWith(currentDir + FileUtils.getTargetDir());
             targetFilePath = placedOutOfTargetDir
                     ? FileUtils.saveFile(file, file.getName())
                     : filePath.replaceFirst(currentDir, "");
